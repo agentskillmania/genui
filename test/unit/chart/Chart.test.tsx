@@ -10,65 +10,67 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import React from 'react';
 
-// Mock echarts sub-modules — they export chart/component/renderer classes
-// that get passed to echarts.use(). We mock them as empty objects since
-// only echarts/core's init/use/setOption matter for tests.
-vi.mock('echarts/charts', () => ({}));
-vi.mock('echarts/components', () => ({}));
-vi.mock('echarts/renderers', () => ({ CanvasRenderer: {} }));
+// ---------- Mock registry ----------
+// vi.hoisted() runs before vi.mock factories, so the registry is
+// available inside the mock factory.
+const mockRegistry = vi.hoisted(() => ({
+  setOption: vi.fn(),
+  resize: vi.fn(),
+  dispose: vi.fn(),
+  init: vi.fn(),
+  use: vi.fn(),
+}));
 
-// Mock echarts/core — factory must be self-contained (vi.mock is hoisted).
-// Chart.tsx uses `import * as echarts from 'echarts/core'` so `use` and `init`
-// must be named exports (not just on `default`).
+// ---------- ECharts mock ----------
+
 vi.mock('echarts/core', () => {
-  const fakeSetOption = vi.fn();
-  const fakeResize = vi.fn();
-  const fakeDispose = vi.fn();
-  const fakeInit = vi.fn();
-  const fakeUse = vi.fn();
-
   const fakeInstance = {
-    setOption: fakeSetOption,
-    resize: fakeResize,
-    dispose: fakeDispose,
+    setOption: (...args: unknown[]) => mockRegistry.setOption(...args),
+    resize: (...args: unknown[]) => mockRegistry.resize(...args),
+    dispose: (...args: unknown[]) => mockRegistry.dispose(...args),
   };
-
-  fakeInit.mockReturnValue(fakeInstance);
 
   return {
     __esModule: true,
-    init: fakeInit,
-    use: fakeUse,
-    // Exported for test access via require()
-    _mockSetOption: fakeSetOption,
-    _mockResize: fakeResize,
-    _mockDispose: fakeDispose,
-    _mockInit: fakeInit,
+    init: (...args: unknown[]) => {
+      mockRegistry.init(...args);
+      return fakeInstance;
+    },
+    use: (...args: unknown[]) => mockRegistry.use(...args),
   };
 });
+
+vi.mock('echarts/charts', () => ({
+  __esModule: true,
+  BarChart: {},
+  LineChart: {},
+  PieChart: {},
+  ScatterChart: {},
+  RadarChart: {},
+  FunnelChart: {},
+  HeatmapChart: {},
+  TreemapChart: {},
+  GaugeChart: {},
+}));
+
+vi.mock('echarts/components', () => ({
+  __esModule: true,
+  GridComponent: {},
+  TooltipComponent: {},
+  LegendComponent: {},
+  TitleComponent: {},
+  VisualMapComponent: {},
+}));
+
+vi.mock('echarts/renderers', () => ({
+  __esModule: true,
+  CanvasRenderer: {},
+}));
 
 // Must come AFTER vi.mock
 import { Chart, buildEChartsOption } from '../../../src/components/chart/Chart';
 
 // ---------- helpers ----------
-
-/** Access the mock functions from the echarts/core mock */
-function getMocks() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const core = require('echarts/core') as {
-    init: ReturnType<typeof vi.fn>;
-    use: ReturnType<typeof vi.fn>;
-    _mockSetOption: ReturnType<typeof vi.fn>;
-    _mockResize: ReturnType<typeof vi.fn>;
-    _mockDispose: ReturnType<typeof vi.fn>;
-  };
-  return {
-    init: core.init,
-    setOption: core._mockSetOption,
-    resize: core._mockResize,
-    dispose: core._mockDispose,
-  };
-}
 
 function makeProps(overrides: Record<string, unknown> = {}) {
   return {
@@ -92,10 +94,10 @@ function makeProps(overrides: Record<string, unknown> = {}) {
 
 describe('Chart component', () => {
   beforeEach(() => {
-    const { setOption, dispose, resize } = getMocks();
-    setOption.mockClear();
-    dispose.mockClear();
-    resize.mockClear();
+    mockRegistry.setOption.mockClear();
+    mockRegistry.resize.mockClear();
+    mockRegistry.dispose.mockClear();
+    mockRegistry.init.mockClear();
   });
 
   it('renders a container div without crashing', () => {
@@ -105,31 +107,27 @@ describe('Chart component', () => {
   });
 
   it('initializes an ECharts instance on mount', () => {
-    const { init } = getMocks();
     render(<Chart {...makeProps()} />);
-    expect(init).toHaveBeenCalledTimes(1);
+    expect(mockRegistry.init).toHaveBeenCalledTimes(1);
   });
 
   it('calls setOption with correct bar series type', () => {
-    const { setOption } = getMocks();
     render(<Chart {...makeProps()} />);
 
-    expect(setOption).toHaveBeenCalled();
-    const option = setOption.mock.calls[0][0];
+    expect(mockRegistry.setOption).toHaveBeenCalled();
+    const option = mockRegistry.setOption.mock.calls[0][0];
     expect(option.series[0].type).toBe('bar');
   });
 
   it('calls setOption with correct line series type', () => {
-    const { setOption } = getMocks();
     render(<Chart {...makeProps({ chartType: 'line' })} />);
 
-    expect(setOption).toHaveBeenCalled();
-    const option = setOption.mock.calls[0][0];
+    expect(mockRegistry.setOption).toHaveBeenCalled();
+    const option = mockRegistry.setOption.mock.calls[0][0];
     expect(option.series[0].type).toBe('line');
   });
 
   it('calls setOption for pie chart using angleField and colorField', () => {
-    const { setOption } = getMocks();
     render(
       <Chart
         {...makeProps({
@@ -139,8 +137,8 @@ describe('Chart component', () => {
       />,
     );
 
-    expect(setOption).toHaveBeenCalled();
-    const option = setOption.mock.calls[0][0];
+    expect(mockRegistry.setOption).toHaveBeenCalled();
+    const option = mockRegistry.setOption.mock.calls[0][0];
     expect(option.series[0].type).toBe('pie');
     expect(option.series[0].data).toEqual([
       { name: 'A', value: 10 },
@@ -149,7 +147,6 @@ describe('Chart component', () => {
   });
 
   it('calls setOption for donut chart with inner radius', () => {
-    const { setOption } = getMocks();
     render(
       <Chart
         {...makeProps({
@@ -159,50 +156,46 @@ describe('Chart component', () => {
       />,
     );
 
-    expect(setOption).toHaveBeenCalled();
-    const option = setOption.mock.calls[0][0];
+    expect(mockRegistry.setOption).toHaveBeenCalled();
+    const option = mockRegistry.setOption.mock.calls[0][0];
     expect(option.series[0].type).toBe('pie');
     expect(option.series[0].radius).toEqual(['40%', '70%']);
   });
 
   it('renders area chart with areaStyle', () => {
-    const { setOption } = getMocks();
     render(<Chart {...makeProps({ chartType: 'area' })} />);
 
-    expect(setOption).toHaveBeenCalled();
-    const option = setOption.mock.calls[0][0];
+    expect(mockRegistry.setOption).toHaveBeenCalled();
+    const option = mockRegistry.setOption.mock.calls[0][0];
     expect(option.series[0].type).toBe('line');
     expect(option.series[0].areaStyle).toBeDefined();
   });
 
   it('disposes chart on unmount', () => {
-    const { dispose } = getMocks();
     const { unmount } = render(<Chart {...makeProps()} />);
 
-    expect(dispose).not.toHaveBeenCalled();
+    expect(mockRegistry.dispose).not.toHaveBeenCalled();
     unmount();
-    expect(dispose).toHaveBeenCalledTimes(1);
+    expect(mockRegistry.dispose).toHaveBeenCalledTimes(1);
   });
 
   it('handles chartType change by calling setOption again', () => {
-    const { setOption } = getMocks();
     const { rerender } = render(<Chart {...makeProps({ chartType: 'bar' })} />);
-    setOption.mockClear();
+    mockRegistry.setOption.mockClear();
 
     // Re-render with a different chart type
     rerender(<Chart {...makeProps({ chartType: 'scatter' })} />);
 
-    expect(setOption).toHaveBeenCalled();
-    const option = setOption.mock.calls[0][0];
+    expect(mockRegistry.setOption).toHaveBeenCalled();
+    const option = mockRegistry.setOption.mock.calls[0][0];
     expect(option.series[0].type).toBe('scatter');
   });
 
   it('handles empty data gracefully', () => {
-    const { setOption } = getMocks();
     render(<Chart {...makeProps({ data: [] })} />);
 
-    expect(setOption).toHaveBeenCalled();
-    const option = setOption.mock.calls[0][0];
+    expect(mockRegistry.setOption).toHaveBeenCalled();
+    const option = mockRegistry.setOption.mock.calls[0][0];
     // Should not throw, series data should be empty
     expect(option.series[0].data).toEqual([]);
   });
