@@ -2,11 +2,13 @@ import type { ReactNode } from 'react';
 
 /**
  * Core props passed to every GenUI component renderer.
- * Mirrors the A2UI component tree node shape.
+ * Mirrors the A2UI v0.9 component model.
  */
 export interface GenUIComponentProps {
   id: string;
-  type: string;
+  /** Component type name — matches A2UI v0.9 "component" field */
+  component: string;
+  /** Component-specific properties (text, variant, dataSource, etc.) */
   properties: Record<string, unknown>;
   children?: ReactNode;
   onAction?: (action: string, context?: Record<string, unknown>) => void;
