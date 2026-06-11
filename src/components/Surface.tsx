@@ -143,6 +143,9 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
         properties,
       ) as Record<string, unknown>;
 
+      // Pass child component types so layout renderers can adapt
+      const childTypes = childComponents.map((c) => c.component);
+
       return (
         <React.Fragment key={id}>
           {React.createElement(renderer, {
@@ -150,6 +153,7 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
             component,
             properties: resolvedProps,
             children: childComponents.map((childComp) => renderComponent(surfaceId, childComp)),
+            childTypes,
             onAction: (_action, context) => handleComponentAction(surfaceId, id, _action, context),
           })}
         </React.Fragment>

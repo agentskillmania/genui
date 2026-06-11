@@ -1,7 +1,7 @@
 /**
  * Unit tests for the Row layout component.
  * Covers: rendering without properties, justify/align/gutter/wrap props,
- * custom style, and children.
+ * custom style, children, and auto Col wrapping for non-Column children.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -91,5 +91,63 @@ describe('Row component', () => {
   it('renders without children without crashing', () => {
     const { container } = render(<Row {...makeProps()} />);
     expect(container.querySelector('.ant-row')).toBeTruthy();
+  });
+
+  // ---- Auto Col wrapping ----
+
+  it('wraps non-Column children in Col automatically', () => {
+    const { container } = render(
+      <Row {...makeProps()} childTypes={['Statistic', 'Statistic', 'Statistic']}>
+        <div>Stat A</div>
+        <div>Stat B</div>
+        <div>Stat C</div>
+      </Row>,
+    );
+
+    const cols = container.querySelectorAll('.ant-col');
+    expect(cols).toHaveLength(3);
+    expect(screen.getByText('Stat A')).toBeDefined();
+  });
+
+  it('does not wrap Column children in extra Col', () => {
+    const { container } = render(
+      <Row {...makeProps()} childTypes={['Column', 'Column']}>
+        <div className="mock-col">Left</div>
+        <div className="mock-col">Right</div>
+      </Row>,
+    );
+
+    // No auto-wrapping Col added — children pass through as-is
+    const cols = container.querySelectorAll('.ant-col');
+    expect(cols).toHaveLength(0);
+  });
+
+  it('wraps only non-Column children in a mixed set', () => {
+    const { container } = render(
+      <Row {...makeProps()} childTypes={['Column', 'Tag', 'Tag']}>
+        <div className="mock-col">Col Child</div>
+        <div>Tag A</div>
+        <div>Tag B</div>
+      </Row>,
+    );
+
+    // Only the two Tag children get wrapped; Column child passes through
+    const cols = container.querySelectorAll('.ant-col');
+    expect(cols).toHaveLength(2);
+    expect(cols[0].textContent).toBe('Tag A');
+    expect(cols[1].textContent).toBe('Tag B');
+  });
+
+  it('wraps all children when childTypes is not provided', () => {
+    const { container } = render(
+      <Row {...makeProps()}>
+        <div>A</div>
+        <div>B</div>
+      </Row>,
+    );
+
+    // No childTypes — treat all as non-Column
+    const cols = container.querySelectorAll('.ant-col');
+    expect(cols).toHaveLength(2);
   });
 });

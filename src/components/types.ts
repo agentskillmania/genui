@@ -11,6 +11,8 @@ export interface GenUIComponentProps {
   /** Component-specific properties (text, variant, dataSource, etc.) */
   properties: Record<string, unknown>;
   children?: ReactNode;
+  /** A2UI component types of each child, in the same order as `children`. */
+  childTypes?: string[];
   onAction?: (action: string, context?: Record<string, unknown>) => void;
   onSyncState?: (change: Record<string, unknown>) => void;
 }
