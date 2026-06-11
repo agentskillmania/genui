@@ -125,25 +125,25 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   );
 
   const renderComponent = useCallback(
-    (surfaceId: string, component: AGenUIComponent): React.ReactNode => {
-      const renderer = getComponentRenderer(component.type);
+    (surfaceId: string, comp: AGenUIComponent): React.ReactNode => {
+      const renderer = getComponentRenderer(comp.component);
       if (!renderer) {
-        console.warn(`[GenUI] Unknown component type: ${component.type}`);
+        console.warn(`[GenUI] Unknown component type: ${comp.component}`);
         return null;
       }
 
-      const { id, type, ...properties } = component;
+      const { id, component, child, children, action, checks, ...properties } = comp;
       const engine = surfaceManager.getEngine();
       const surface = engine.getSurface(surfaceId);
-      const children = surface?.getChildren(id) || [];
+      const childComponents = surface?.getChildren(id) || [];
 
       return (
         <React.Fragment key={id}>
           {React.createElement(renderer, {
             id,
-            type,
+            component,
             properties: properties as Record<string, unknown>,
-            children: children.map((child) => renderComponent(surfaceId, child)),
+            children: childComponents.map((childComp) => renderComponent(surfaceId, childComp)),
             onAction: (_action, context) => handleComponentAction(surfaceId, id, _action, context),
           })}
         </React.Fragment>
