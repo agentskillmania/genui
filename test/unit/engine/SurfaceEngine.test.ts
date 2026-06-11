@@ -89,21 +89,26 @@ describe('SurfaceEngine – component tree', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const json = [
-      JSON.stringify({ id: 'c1', type: 'Text', text: 'hello' }),
-      JSON.stringify({ id: 'c2', type: 'Button', label: 'ok' }),
+      JSON.stringify({ id: 'root', component: 'Container', children: ['c1', 'c2'] }),
+      JSON.stringify({ id: 'c1', component: 'Text', text: 'hello' }),
+      JSON.stringify({ id: 'c2', component: 'Button', label: 'ok' }),
     ];
     engine.updateComponents('s1', json);
     const surface = engine.getSurface('s1')!;
     const roots = surface.getRootComponents();
-    expect(roots).toHaveLength(2);
-    expect(roots[0].id).toBe('c1');
-    expect(roots[1].id).toBe('c2');
+    expect(roots).toHaveLength(1);
+    expect(roots[0].id).toBe('root');
+    // Children are resolved via the adjacency list
+    const children = surface.getChildren('root');
+    expect(children).toHaveLength(2);
+    expect(children[0].id).toBe('c1');
+    expect(children[1].id).toBe('c2');
   });
 
   it('updateComponents emits updateComponents event with payload', () => {
     const engine = new SurfaceEngine();
     const cap = setup(engine);
-    const json = [JSON.stringify({ id: 'c1', type: 'Text' })];
+    const json = [JSON.stringify({ id: 'c1', component: 'Text' })];
     engine.updateComponents('s1', json);
     expect(cap.events).toHaveLength(1);
     expect(cap.events[0].type).toBe('updateComponents');
@@ -113,23 +118,23 @@ describe('SurfaceEngine – component tree', () => {
   it('updateComponent does incremental update', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
-    const json = [JSON.stringify({ id: 'c1', type: 'Text', text: 'v1' })];
+    const json = [JSON.stringify({ id: 'root', component: 'Text', text: 'v1' })];
     engine.updateComponents('s1', json);
     // incremental update
-    engine.updateComponent('s1', JSON.stringify({ id: 'c1', type: 'Text', text: 'v2' }));
+    engine.updateComponent('s1', JSON.stringify({ id: 'root', component: 'Text', text: 'v2' }));
     const surface = engine.getSurface('s1')!;
     const roots = surface.getRootComponents();
     expect(roots).toHaveLength(1);
     expect(roots[0].text).toBe('v2');
   });
 
-  it('getRootComponents returns only root-level components', () => {
+  it('getRootComponents returns the component with id="root"', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const json = [
-      JSON.stringify({ id: 'root', type: 'Container' }),
-      JSON.stringify({ id: 'child1', type: 'Text', parentId: 'root' }),
-      JSON.stringify({ id: 'child2', type: 'Button', parentId: 'root' }),
+      JSON.stringify({ id: 'root', component: 'Container', children: ['child1', 'child2'] }),
+      JSON.stringify({ id: 'child1', component: 'Text' }),
+      JSON.stringify({ id: 'child2', component: 'Button' }),
     ];
     engine.updateComponents('s1', json);
     const surface = engine.getSurface('s1')!;
@@ -138,13 +143,13 @@ describe('SurfaceEngine – component tree', () => {
     expect(roots[0].id).toBe('root');
   });
 
-  it('getChildren returns child components', () => {
+  it('getChildren resolves children from parent children field', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const json = [
-      JSON.stringify({ id: 'root', type: 'Container' }),
-      JSON.stringify({ id: 'child1', type: 'Text', parentId: 'root' }),
-      JSON.stringify({ id: 'child2', type: 'Button', parentId: 'root' }),
+      JSON.stringify({ id: 'root', component: 'Container', children: ['child1', 'child2'] }),
+      JSON.stringify({ id: 'child1', component: 'Text' }),
+      JSON.stringify({ id: 'child2', component: 'Button' }),
     ];
     engine.updateComponents('s1', json);
     const surface = engine.getSurface('s1')!;
@@ -158,27 +163,27 @@ describe('SurfaceEngine – component tree', () => {
     engine.createSurface('s1', 'c1', {});
     const json = [
       'not-valid-json',
-      JSON.stringify({ id: 'c1', type: 'Text' }),
+      JSON.stringify({ id: 'root', component: 'Text' }),
     ];
     engine.updateComponents('s1', json);
     const surface = engine.getSurface('s1')!;
     const roots = surface.getRootComponents();
     expect(roots).toHaveLength(1);
-    expect(roots[0].id).toBe('c1');
+    expect(roots[0].id).toBe('root');
   });
 
   it('component without ID is skipped', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const json = [
-      JSON.stringify({ type: 'Text', text: 'no-id' }),
-      JSON.stringify({ id: 'c1', type: 'Text' }),
+      JSON.stringify({ component: 'Text', text: 'no-id' }),
+      JSON.stringify({ id: 'root', component: 'Text' }),
     ];
     engine.updateComponents('s1', json);
     const surface = engine.getSurface('s1')!;
     const roots = surface.getRootComponents();
     expect(roots).toHaveLength(1);
-    expect(roots[0].id).toBe('c1');
+    expect(roots[0].id).toBe('root');
   });
 });
 
@@ -189,8 +194,8 @@ describe('SurfaceEngine – data model', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    surface.updateDataModel('user.name', 'Alice');
-    expect(surface.resolveBinding('${user.name}')).toBe('Alice');
+    surface.updateDataModel('/user/name', 'Alice');
+    expect(surface.resolveBinding('${/user/name}')).toBe('Alice');
   });
 
   it('updateDataModel with "/" replaces entire model', () => {
@@ -198,40 +203,40 @@ describe('SurfaceEngine – data model', () => {
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
     surface.updateDataModel('/', { foo: 'bar' });
-    expect(surface.resolveBinding('${foo}')).toBe('bar');
+    expect(surface.resolveBinding('${/foo}')).toBe('bar');
   });
 
   it('updateDataModel creates intermediate objects', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    surface.updateDataModel('a.b.c', 'deep');
-    expect(surface.resolveBinding('${a.b.c}')).toBe('deep');
+    surface.updateDataModel('/a/b/c', 'deep');
+    expect(surface.resolveBinding('${/a/b/c}')).toBe('deep');
   });
 
   it('appendDataModel appends string to existing', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    surface.updateDataModel('text', 'hello');
-    surface.appendDataModel('text', ' world');
-    expect(surface.resolveBinding('${text}')).toBe('hello world');
+    surface.updateDataModel('/text', 'hello');
+    surface.appendDataModel('/text', ' world');
+    expect(surface.resolveBinding('${/text}')).toBe('hello world');
   });
 
   it('appendDataModel sets value if not existing', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    surface.appendDataModel('text', 'first');
-    expect(surface.resolveBinding('${text}')).toBe('first');
+    surface.appendDataModel('/text', 'first');
+    expect(surface.resolveBinding('${/text}')).toBe('first');
   });
 
-  it('resolveBinding resolves ${path.to.value}', () => {
+  it('resolveBinding resolves ${/items/0/name}', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    surface.updateDataModel('items.0.name', 'alpha');
-    expect(surface.resolveBinding('${items.0.name}')).toBe('alpha');
+    surface.updateDataModel('/items/0/name', 'alpha');
+    expect(surface.resolveBinding('${/items/0/name}')).toBe('alpha');
   });
 
   it('resolveBinding returns raw string if not binding expression', () => {
@@ -245,7 +250,7 @@ describe('SurfaceEngine – data model', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    expect(surface.resolveBinding('${does.not.exist}')).toBeUndefined();
+    expect(surface.resolveBinding('${/does/not/exist}')).toBeUndefined();
   });
 });
 
@@ -363,10 +368,10 @@ describe('SurfaceEngine – edge cases', () => {
     const engine = new SurfaceEngine();
     const cap = captureEvents(engine);
     // These should not throw
-    engine.updateComponents('nope', [JSON.stringify({ id: 'c1', type: 'Text' })]);
-    engine.updateComponent('nope', JSON.stringify({ id: 'c1', type: 'Text' }));
-    engine.updateDataModel('nope', 'path', 'val');
-    engine.appendDataModel('nope', 'path', 'val');
+    engine.updateComponents('nope', [JSON.stringify({ id: 'c1', component: 'Text' })]);
+    engine.updateComponent('nope', JSON.stringify({ id: 'c1', component: 'Text' }));
+    engine.updateDataModel('nope', '/path', 'val');
+    engine.appendDataModel('nope', '/path', 'val');
     engine.deleteSurface('nope');
     engine.submitAction('nope', 'c1');
     engine.syncUIToData('nope', 'c1', {});

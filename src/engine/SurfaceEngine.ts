@@ -1,9 +1,10 @@
 /**
  * SurfaceEngine — manages the state of all A2UI surfaces.
  *
- * Each surface owns a component tree (flat map with parent-child relationships),
- * a data model (JSON object with path-based get/set/append), theme configuration,
- * and data binding resolution (${path.to.value} syntax).
+ * Each surface owns a component tree (flat map with adjacency-list relationships
+ * per A2UI v0.9: parents reference children via `child`/`children` fields),
+ * a data model (JSON object with JSON Pointer-based get/set/append per RFC 6901),
+ * theme configuration, and data binding resolution (${/path/to/value} syntax).
  *
  * This is a pure TypeScript engine with no React or DOM dependencies.
  */
@@ -85,6 +86,7 @@ export class SurfaceState {
   /**
    * Bulk-replace the component tree from an array of JSON strings.
    * Malformed JSON entries and components without an `id` field are silently skipped.
+   * Components use the A2UI v0.9 adjacency-list model (parent references children).
    */
   updateComponents(componentsJson: string[]): void {
     for (const json of componentsJson) {
@@ -124,53 +126,68 @@ export class SurfaceState {
   }
 
   /**
-   * Returns components that have no `parentId` field (root-level).
+   * Returns the component with `id === "root"`, or an empty array if absent.
+   * A2UI v0.9 requires exactly one root component per surface.
    */
   getRootComponents(): AGenUIComponent[] {
-    const roots: AGenUIComponent[] = [];
-    for (const comp of this.components.values()) {
-      if (comp.parentId === undefined || comp.parentId === null) {
-        roots.push(comp);
-      }
-    }
-    return roots;
+    const root = this.components.get('root');
+    return root ? [root] : [];
   }
 
   /**
-   * Returns all components whose `parentId` equals the given id.
+   * Resolve the children of a parent component using its `child` or `children` field.
+   * A2UI v0.9 uses an adjacency-list model where parents reference children by ID.
    */
   getChildren(parentId: string): AGenUIComponent[] {
-    const children: AGenUIComponent[] = [];
-    for (const comp of this.components.values()) {
-      if (comp.parentId === parentId) {
-        children.push(comp);
-      }
+    const parent = this.components.get(parentId);
+    if (!parent) return [];
+
+    // Single child reference (Card, Button, Modal)
+    if (parent.child) {
+      const childComp = this.components.get(parent.child);
+      return childComp ? [childComp] : [];
     }
-    return children;
+
+    // Multiple children references
+    if (parent.children) {
+      if (Array.isArray(parent.children)) {
+        const resolved: AGenUIComponent[] = [];
+        for (const childId of parent.children) {
+          const childComp = this.components.get(childId);
+          if (childComp) resolved.push(childComp);
+        }
+        return resolved;
+      }
+      // Template binding — not yet supported for rendering
+      return [];
+    }
+
+    return [];
   }
 
   // ---- Data model ----
 
   /**
-   * Set a value at a dot-separated path in the data model.
+   * Set a value at a JSON Pointer path in the data model.
    * Intermediate objects are created automatically.
-   * Using '/' as the path replaces the entire data model.
+   * Using '/' or '' as the path replaces the entire data model.
    */
   updateDataModel(path: string, value: unknown): void {
-    if (path === '/') {
+    if (path === '/' || path === '') {
       this.dataModel = value as Record<string, unknown>;
       return;
     }
-    const segments = path.split('.');
+    // JSON Pointer (RFC 6901): /user/name — split on '/' and skip empty segments
+    const segments = path.split('/').filter((s) => s.length > 0);
     setByPath(this.dataModel, segments, value);
   }
 
   /**
-   * Append a string value at the given path.
+   * Append a string value at the given JSON Pointer path.
    * If the path does not exist yet, the value is set directly (no append).
    */
   appendDataModel(path: string, value: string): void {
-    const segments = path.split('.');
+    const segments = path.split('/').filter((s) => s.length > 0);
     const existing = getByPath(this.dataModel, segments);
     if (typeof existing === 'string') {
       setByPath(this.dataModel, segments, existing + value);
@@ -182,8 +199,9 @@ export class SurfaceState {
   /**
    * Resolve a data binding expression.
    *
-   * - If the expression matches `${path.to.value}`, the corresponding value
-   *   from the data model is returned (or `undefined` if missing).
+   * - If the expression matches `${/user/name}` (JSON Pointer) or `${user.name}`
+   *   (legacy dot notation), the corresponding value from the data model is returned
+   *   (or `undefined` if missing).
    * - Otherwise the raw string is returned unchanged.
    */
   resolveBinding(expression: string): unknown {
@@ -191,7 +209,12 @@ export class SurfaceState {
     if (!match) {
       return expression;
     }
-    const segments = match[1].split('.');
+    const path = match[1];
+    // JSON Pointer: starts with / — /user/name
+    // Legacy dot notation: user.name (kept for backward compat during migration)
+    const segments = path.startsWith('/')
+      ? path.split('/').filter((s) => s.length > 0)
+      : path.split('.');
     return getByPath(this.dataModel, segments);
   }
 
