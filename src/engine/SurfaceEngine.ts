@@ -4,7 +4,8 @@
  * Each surface owns a component tree (flat map with adjacency-list relationships
  * per A2UI v0.9: parents reference children via `child`/`children` fields),
  * a data model (JSON object with JSON Pointer-based get/set/append per RFC 6901),
- * theme configuration, and data binding resolution (${/path/to/value} syntax).
+ * theme configuration, and data binding resolution via A2UI v0.9 path objects
+ * (`{ "path": "/pointer" }` per the official specification).
  *
  * This is a pure TypeScript engine with no React or DOM dependencies.
  */
@@ -197,41 +198,15 @@ export class SurfaceState {
   }
 
   /**
-   * Resolve a data binding expression.
+   * Recursively resolve all A2UI v0.9 data binding expressions in a value.
    *
-   * - If the expression matches `${/user/name}` (JSON Pointer) or `${user.name}`
-   *   (legacy dot notation), the corresponding value from the data model is returned
-   *   (or `undefined` if missing).
-   * - Otherwise the raw string is returned unchanged.
-   */
-  resolveBinding(expression: string): unknown {
-    const match = /^\$\{(.+)\}$/.exec(expression);
-    if (!match) {
-      return expression;
-    }
-    const path = match[1];
-    // JSON Pointer: starts with / — /user/name
-    // Legacy dot notation: user.name (kept for backward compat during migration)
-    const segments = path.startsWith('/')
-      ? path.split('/').filter((s) => s.length > 0)
-      : path.split('.');
-    return getByPath(this.dataModel, segments);
-  }
-
-  /**
-   * Recursively resolve all data binding expressions in a value.
-   *
-   * Supports two binding formats per A2UI v0.9:
-   * - **Path object**: `{ "path": "/user/name" }` — resolved to the data model value.
-   * - **Template string**: `${/path}` — resolved via resolveBinding (legacy compat).
+   * Recognizes `{ "path": "/user/name" }` objects per the official A2UI v0.9
+   * specification and resolves them to the corresponding data model value.
    *
    * Plain objects (without a `path` key) and arrays are walked recursively.
-   * All other types (number, boolean, null) are returned as-is.
+   * All other types (string, number, boolean, null) are returned as-is.
    */
   resolveProperties(value: unknown): unknown {
-    if (typeof value === 'string') {
-      return this.resolveBinding(value);
-    }
     if (Array.isArray(value)) {
       return value.map((item) => this.resolveProperties(item));
     }
@@ -343,8 +318,8 @@ export class SurfaceEngine {
   // ---- Data binding resolution ----
 
   /**
-   * Recursively resolve all `${...}` binding expressions in a value
-   * using the data model of the specified surface.
+   * Recursively resolve all A2UI v0.9 `{ "path": "..." }` binding expressions
+   * in a value using the data model of the specified surface.
    * Returns the value unchanged if the surface does not exist.
    */
   resolveProperties(surfaceId: string, value: unknown): unknown {

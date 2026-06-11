@@ -224,7 +224,7 @@ describe('SurfaceManager', () => {
       feedEvent(manager, UPDATE_DATA_MODEL('s1', '/user/name', 'Alice'));
 
       const surface = manager.getEngine().getSurface('s1')!;
-      expect(surface.resolveBinding('${/user/name}')).toBe('Alice');
+      expect(surface.resolveProperties({ path: '/user/name' })).toBe('Alice');
     });
 
     it('should update nested paths correctly', () => {
@@ -232,7 +232,7 @@ describe('SurfaceManager', () => {
       feedEvent(manager, UPDATE_DATA_MODEL('s1', '/a/b/c', 'deep'));
 
       const surface = manager.getEngine().getSurface('s1')!;
-      expect(surface.resolveBinding('${/a/b/c}')).toBe('deep');
+      expect(surface.resolveProperties({ path: '/a/b/c' })).toBe('deep');
     });
 
     it('should handle non-string values (numbers, objects)', () => {
@@ -240,7 +240,7 @@ describe('SurfaceManager', () => {
       feedEvent(manager, UPDATE_DATA_MODEL('s1', '/count', 42));
 
       const surface = manager.getEngine().getSurface('s1')!;
-      expect(surface.resolveBinding('${/count}')).toBe(42);
+      expect(surface.resolveProperties({ path: '/count' })).toBe(42);
     });
 
     it('should ignore UpdateDataModel for a non-existent surface', () => {
@@ -261,7 +261,7 @@ describe('SurfaceManager', () => {
       feedEvent(manager, APPEND_DATA_MODEL('s1', '/log', 'line2'));
 
       const surface = manager.getEngine().getSurface('s1')!;
-      expect(surface.resolveBinding('${/log}')).toBe('line1line2');
+      expect(surface.resolveProperties({ path: '/log' })).toBe('line1line2');
     });
 
     it('should set value directly when path does not exist yet', () => {
@@ -269,7 +269,7 @@ describe('SurfaceManager', () => {
       feedEvent(manager, APPEND_DATA_MODEL('s1', '/fresh', 'initial'));
 
       const surface = manager.getEngine().getSurface('s1')!;
-      expect(surface.resolveBinding('${/fresh}')).toBe('initial');
+      expect(surface.resolveProperties({ path: '/fresh' })).toBe('initial');
     });
 
     it('should JSON-stringify non-string values', () => {
@@ -284,7 +284,7 @@ describe('SurfaceManager', () => {
 
       const surface = manager.getEngine().getSurface('s1')!;
       // Non-string value gets JSON.stringify'd then appended
-      expect(surface.resolveBinding('${/items}')).toBe('{"key":"val"}');
+      expect(surface.resolveProperties({ path: '/items' })).toBe('{"key":"val"}');
     });
 
     it('should ignore AppendDataModel for a non-existent surface', () => {
@@ -614,7 +614,7 @@ describe('SurfaceManager', () => {
         JSON.stringify({ version: 'v0.9', updateDataModel: { surfaceId: 's1', path: '/x', value: 42 } }),
       );
 
-      expect(manager.getEngine().getSurface('s1')!.resolveBinding('${/x}')).toBe(42);
+      expect(manager.getEngine().getSurface('s1')!.resolveProperties({ path: '/x' })).toBe(42);
     });
 
     it('should handle AppendDataModel with nested payload format', () => {
@@ -624,7 +624,7 @@ describe('SurfaceManager', () => {
         JSON.stringify({ version: 'v0.9', appendDataModel: { surfaceId: 's1', path: '/log', value: 'line1' } }),
       );
 
-      expect(manager.getEngine().getSurface('s1')!.resolveBinding('${/log}')).toBe('line1');
+      expect(manager.getEngine().getSurface('s1')!.resolveProperties({ path: '/log' })).toBe('line1');
     });
 
     it('should handle UpdateComponents with nested payload format', () => {

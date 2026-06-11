@@ -41,6 +41,7 @@ const FormBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'info-alert', 'personal-card'] }),
         JSON.stringify({ id: 'title', component: 'Text', text: '📝 Create Account', variant: 'h2' }),
         JSON.stringify({
           id: 'info-alert', component: 'Alert',
@@ -79,6 +80,7 @@ const FormBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'info-alert', 'personal-card', 'prefs-card'] }),
         JSON.stringify({
           id: 'prefs-card', component: 'Card', title: 'Preferences', style: { marginBottom: 16 }, children: ['role-label', 'role-picker', 'exp-label', 'experience', 'theme-row', 'fav-color-label', 'fav-color'],
         }),
@@ -143,6 +145,7 @@ const FormBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'info-alert', 'personal-card', 'prefs-card', 'team-card'] }),
         JSON.stringify({
           id: 'team-card', component: 'Card', title: 'Team & Location', style: { marginBottom: 16 }, children: ['dept-label', 'department', 'team-label', 'team-tree', 'commute-label', 'commute'],
         }),
@@ -213,6 +216,7 @@ const FormBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'info-alert', 'personal-card', 'prefs-card', 'team-card', 'footer-divider', 'action-row'] }),
         JSON.stringify({
           id: 'footer-divider', component: 'Divider',
         }),

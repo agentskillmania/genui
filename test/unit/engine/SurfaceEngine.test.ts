@@ -195,7 +195,7 @@ describe('SurfaceEngine – data model', () => {
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
     surface.updateDataModel('/user/name', 'Alice');
-    expect(surface.resolveBinding('${/user/name}')).toBe('Alice');
+    expect(surface.resolveProperties({ path: '/user/name' })).toBe('Alice');
   });
 
   it('updateDataModel with "/" replaces entire model', () => {
@@ -203,7 +203,7 @@ describe('SurfaceEngine – data model', () => {
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
     surface.updateDataModel('/', { foo: 'bar' });
-    expect(surface.resolveBinding('${/foo}')).toBe('bar');
+    expect(surface.resolveProperties({ path: '/foo' })).toBe('bar');
   });
 
   it('updateDataModel creates intermediate objects', () => {
@@ -211,7 +211,7 @@ describe('SurfaceEngine – data model', () => {
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
     surface.updateDataModel('/a/b/c', 'deep');
-    expect(surface.resolveBinding('${/a/b/c}')).toBe('deep');
+    expect(surface.resolveProperties({ path: '/a/b/c' })).toBe('deep');
   });
 
   it('appendDataModel appends string to existing', () => {
@@ -220,7 +220,7 @@ describe('SurfaceEngine – data model', () => {
     const surface = engine.getSurface('s1')!;
     surface.updateDataModel('/text', 'hello');
     surface.appendDataModel('/text', ' world');
-    expect(surface.resolveBinding('${/text}')).toBe('hello world');
+    expect(surface.resolveProperties({ path: '/text' })).toBe('hello world');
   });
 
   it('appendDataModel sets value if not existing', () => {
@@ -228,29 +228,29 @@ describe('SurfaceEngine – data model', () => {
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
     surface.appendDataModel('/text', 'first');
-    expect(surface.resolveBinding('${/text}')).toBe('first');
+    expect(surface.resolveProperties({ path: '/text' })).toBe('first');
   });
 
-  it('resolveBinding resolves ${/items/0/name}', () => {
+  it('resolveProperties resolves { path } for array index access', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
     surface.updateDataModel('/items/0/name', 'alpha');
-    expect(surface.resolveBinding('${/items/0/name}')).toBe('alpha');
+    expect(surface.resolveProperties({ path: '/items/0/name' })).toBe('alpha');
   });
 
-  it('resolveBinding returns raw string if not binding expression', () => {
+  it('resolveProperties returns plain string unchanged', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    expect(surface.resolveBinding('plain text')).toBe('plain text');
+    expect(surface.resolveProperties('plain text')).toBe('plain text');
   });
 
-  it('resolveBinding returns undefined for missing path', () => {
+  it('resolveProperties returns undefined for missing path', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
     const surface = engine.getSurface('s1')!;
-    expect(surface.resolveBinding('${/does/not/exist}')).toBeUndefined();
+    expect(surface.resolveProperties({ path: '/does/not/exist' })).toBeUndefined();
   });
 });
 
@@ -421,13 +421,6 @@ describe('SurfaceEngine – edge cases', () => {
 // ---------- resolveProperties ----------
 
 describe('SurfaceEngine – resolveProperties', () => {
-  it('resolves a simple string binding', () => {
-    const engine = new SurfaceEngine();
-    engine.createSurface('s1', 'c1', {});
-    engine.updateDataModel('s1', '/user', { name: 'Alice' });
-    expect(engine.resolveProperties('s1', '${/user/name}')).toBe('Alice');
-  });
-
   it('returns plain string unchanged', () => {
     const engine = new SurfaceEngine();
     engine.createSurface('s1', 'c1', {});
@@ -452,63 +445,10 @@ describe('SurfaceEngine – resolveProperties', () => {
     expect(engine.resolveProperties('s1', true)).toBe(true);
   });
 
-  it('resolves bindings inside a flat object', () => {
-    const engine = new SurfaceEngine();
-    engine.createSurface('s1', 'c1', {});
-    engine.updateDataModel('s1', '/profile', { name: 'Bob', role: 'Dev' });
-    const result = engine.resolveProperties('s1', {
-      text: '${/profile/name}',
-      subtitle: '${/profile/role}',
-      count: 10,
-    });
-    expect(result).toEqual({ text: 'Bob', subtitle: 'Dev', count: 10 });
-  });
-
-  it('resolves bindings inside nested objects', () => {
-    const engine = new SurfaceEngine();
-    engine.createSurface('s1', 'c1', {});
-    engine.updateDataModel('s1', '/data', { userId: 'u1' });
-    const result = engine.resolveProperties('s1', {
-      action: {
-        event: {
-          name: 'click',
-          context: { userId: '${/data/userId}' },
-        },
-      },
-    });
-    expect(result).toEqual({
-      action: { event: { name: 'click', context: { userId: 'u1' } } },
-    });
-  });
-
-  it('resolves bindings inside arrays', () => {
-    const engine = new SurfaceEngine();
-    engine.createSurface('s1', 'c1', {});
-    engine.updateDataModel('s1', '/tags', ['React', 'Vue']);
-    const result = engine.resolveProperties('s1', {
-      items: ['${/tags/0}', '${/tags/1}', 'Svelte'],
-    });
-    expect(result).toEqual({ items: ['React', 'Vue', 'Svelte'] });
-  });
-
-  it('returns undefined for unresolved bindings', () => {
-    const engine = new SurfaceEngine();
-    engine.createSurface('s1', 'c1', {});
-    // Data model is empty — binding resolves to undefined
-    expect(engine.resolveProperties('s1', '${/missing}')).toBeUndefined();
-  });
-
   it('returns value unchanged for unknown surface', () => {
     const engine = new SurfaceEngine();
-    const input = { text: '${/foo}' };
+    const input = { text: 'hello' };
     expect(engine.resolveProperties('nonexistent', input)).toBe(input);
-  });
-
-  it('resolves legacy dot-notation bindings', () => {
-    const engine = new SurfaceEngine();
-    engine.createSurface('s1', 'c1', {});
-    engine.updateDataModel('s1', '/', { user: { name: 'Carol' } });
-    expect(engine.resolveProperties('s1', '${user.name}')).toBe('Carol');
   });
 
   // ---- A2UI v0.9 { "path": "..." } object binding ----

@@ -45,6 +45,7 @@ const DashboardBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'stats-row'] }),
         JSON.stringify({ id: 'title', component: 'Text', text: '📊 Sales Analytics Dashboard', variant: 'h2' }),
         JSON.stringify({ id: 'stats-row', component: 'Row', gutter: 16, children: ['stat-col-1', 'stat-col-2', 'stat-col-3'] }),
         JSON.stringify({
@@ -75,6 +76,7 @@ const DashboardBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'stats-row', 'chart-section'] }),
         JSON.stringify({
           id: 'chart-section', component: 'Card', title: 'Monthly Revenue', style: { marginTop: 24 }, child: 'revenue-chart',
         }),
@@ -98,6 +100,7 @@ const DashboardBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'stats-row', 'chart-section', 'charts-row'] }),
         JSON.stringify({
           id: 'charts-row', component: 'Row', gutter: 16, style: { marginTop: 24 }, children: ['category-col', 'funnel-col'],
         }),
@@ -143,6 +146,7 @@ const DashboardBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'stats-row', 'chart-section', 'charts-row', 'table-card'] }),
         JSON.stringify({
           id: 'table-card', component: 'Card', title: 'Top Products', style: { marginTop: 24 }, child: 'products-table',
         }),
@@ -169,6 +173,7 @@ const DashboardBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['title', 'stats-row', 'chart-section', 'charts-row', 'table-card', 'footer-divider', 'footer-row'] }),
         JSON.stringify({
           id: 'footer-divider', component: 'Divider', style: { marginTop: 24 },
         }),

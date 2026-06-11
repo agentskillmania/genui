@@ -44,7 +44,7 @@ describe('A2UI v0.9 Contact Form — official spec example', () => {
     expect(headerRow.length).toBeGreaterThan(0);
 
     // Data model was set
-    expect(surface!.resolveBinding('${/contact/firstName}')).toBe('John');
-    expect(surface!.resolveBinding('${/contact/email}')).toBe('john.doe@example.com');
+    expect(surface!.resolveProperties({ path: '/contact/firstName' })).toBe('John');
+    expect(surface!.resolveProperties({ path: '/contact/email' })).toBe('john.doe@example.com');
   });
 });

@@ -45,6 +45,10 @@ class SimulatedAgent {
     m.getEngine().createSurface('interaction', 'genui-antd', {});
 
     m.getEngine().updateComponents('interaction', [
+      // Root wrapper
+      JSON.stringify({
+        id: 'root', component: 'Column', children: ['title', 'subtitle', 'q1-card', 'q2-card', 'q3-card', 'q4-card', 'divider', 'submit-row'],
+      }),
       // Header
       JSON.stringify({
         id: 'title', component: 'Text',
@@ -146,6 +150,7 @@ class SimulatedAgent {
       const m = this.manager;
       // Clear old components and show "thinking" state
       m.getEngine().updateComponents('interaction', [
+        JSON.stringify({ id: 'root', component: 'Column', children: ['loading'] }),
         JSON.stringify({
           id: 'loading', component: 'Card', style: { textAlign: 'center', padding: 48 }, child: 'spinner',
         }),
@@ -163,6 +168,8 @@ class SimulatedAgent {
       const m = this.manager;
 
       m.getEngine().updateComponents('interaction', [
+        // Root wrapper for results
+        JSON.stringify({ id: 'root', component: 'Column', children: ['result-title', 'result-alert', 'stats-row', 'chart-card', 'rec-card', 'footer-divider', 'action-row'] }),
         // Success banner
         JSON.stringify({
           id: 'result-title', component: 'Text',
@@ -260,6 +267,7 @@ class SimulatedAgent {
 
     const m = this.manager;
     m.getEngine().updateComponents('interaction', [
+      JSON.stringify({ id: 'root', component: 'Column', children: ['result-title', 'result-subtitle', 'success-result'] }),
       JSON.stringify({
         id: 'result-title', component: 'Text',
         text: '🎉 Welcome to Pro!', variant: 'h2',
