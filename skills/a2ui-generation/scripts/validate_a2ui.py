@@ -143,7 +143,6 @@ COMPONENT_ENUMS: dict[str, dict[str, set[str]]] = {
     },
     "Avatar": {
         "shape": {"circle", "square"},
-        "size": {"small", "default", "large"},
     },
     "Menu": {
         "mode": {"horizontal", "vertical", "inline"},
