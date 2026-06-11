@@ -219,11 +219,14 @@ export class SurfaceState {
   }
 
   /**
-   * Recursively resolve all `${...}` binding expressions in a value.
+   * Recursively resolve all data binding expressions in a value.
    *
-   * - Strings matching `${/path}` are resolved via the data model.
-   * - Plain objects and arrays are walked recursively.
-   * - All other types (number, boolean, null) are returned as-is.
+   * Supports two binding formats per A2UI v0.9:
+   * - **Path object**: `{ "path": "/user/name" }` — resolved to the data model value.
+   * - **Template string**: `${/path}` — resolved via resolveBinding (legacy compat).
+   *
+   * Plain objects (without a `path` key) and arrays are walked recursively.
+   * All other types (number, boolean, null) are returned as-is.
    */
   resolveProperties(value: unknown): unknown {
     if (typeof value === 'string') {
@@ -233,8 +236,18 @@ export class SurfaceState {
       return value.map((item) => this.resolveProperties(item));
     }
     if (value !== null && typeof value === 'object') {
+      const obj = value as Record<string, unknown>;
+      // A2UI v0.9 path binding: { "path": "/pointer" }
+      if ('path' in obj && typeof obj.path === 'string') {
+        const path = obj.path as string;
+        const segments = path.startsWith('/')
+          ? path.split('/').filter((s) => s.length > 0)
+          : path.split('.');
+        return getByPath(this.dataModel, segments);
+      }
+      // Regular object — walk recursively
       const resolved: Record<string, unknown> = {};
-      for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+      for (const [key, val] of Object.entries(obj)) {
         resolved[key] = this.resolveProperties(val);
       }
       return resolved;

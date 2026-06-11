@@ -510,4 +510,64 @@ describe('SurfaceEngine – resolveProperties', () => {
     engine.updateDataModel('s1', '/', { user: { name: 'Carol' } });
     expect(engine.resolveProperties('s1', '${user.name}')).toBe('Carol');
   });
+
+  // ---- A2UI v0.9 { "path": "..." } object binding ----
+
+  it('resolves a { path } object binding to data model value', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/user', { name: 'Dave' });
+    expect(engine.resolveProperties('s1', { path: '/user/name' })).toBe('Dave');
+  });
+
+  it('resolves { path } binding inside a flat object', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/data', { count: 42 });
+    const result = engine.resolveProperties('s1', {
+      text: { path: '/data/count' },
+      label: 'Static',
+    });
+    expect(result).toEqual({ text: 42, label: 'Static' });
+  });
+
+  it('resolves { path } binding inside nested objects', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/data', { userId: 'u1' });
+    const result = engine.resolveProperties('s1', {
+      action: {
+        event: {
+          name: 'click',
+          context: { userId: { path: '/data/userId' } },
+        },
+      },
+    });
+    expect(result).toEqual({
+      action: { event: { name: 'click', context: { userId: 'u1' } } },
+    });
+  });
+
+  it('resolves { path } binding inside arrays', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/tags', ['React', 'Vue']);
+    const result = engine.resolveProperties('s1', {
+      items: [{ path: '/tags/0' }, { path: '/tags/1' }, 'Svelte'],
+    });
+    expect(result).toEqual({ items: ['React', 'Vue', 'Svelte'] });
+  });
+
+  it('returns undefined for unresolved { path } binding', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    expect(engine.resolveProperties('s1', { path: '/missing' })).toBeUndefined();
+  });
+
+  it('does not treat regular objects with non-string path as binding', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    const input = { path: 123, other: 'value' };
+    expect(engine.resolveProperties('s1', input)).toEqual({ path: 123, other: 'value' });
+  });
 });
