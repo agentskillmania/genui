@@ -14,7 +14,7 @@ export const HorizontalSpace: Story = {
   name: 'Horizontal Space',
   args: {
     id: 'sp-1',
-    type: 'Space',
+    component: 'Space',
     properties: { size: 16 },
     children: (
       <>

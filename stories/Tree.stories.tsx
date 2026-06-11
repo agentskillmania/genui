@@ -13,7 +13,7 @@ export const BasicTree: Story = {
   name: 'Basic Tree',
   args: {
     id: 'tree-1',
-    type: 'Tree',
+    component: 'Tree',
     properties: {
       treeData: [
         {

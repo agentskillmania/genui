@@ -17,7 +17,7 @@ export const Basic: Story = {
   name: 'Basic Anchor',
   args: {
     id: 'anchor-1',
-    type: 'Anchor',
+    component: 'Anchor',
     properties: {
       items: [
         { key: '1', href: '#introduction', title: 'Introduction' },
@@ -32,7 +32,7 @@ export const WithNestedItems: Story = {
   name: 'Anchor with Nested Items',
   args: {
     id: 'anchor-2',
-    type: 'Anchor',
+    component: 'Anchor',
     properties: {
       items: [
         {

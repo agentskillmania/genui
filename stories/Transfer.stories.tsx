@@ -13,7 +13,7 @@ export const BasicTransfer: Story = {
   name: 'Basic Transfer',
   args: {
     id: 'tr-1',
-    type: 'Transfer',
+    component: 'Transfer',
     properties: {
       dataSource: [
         { key: '1', title: 'Option A' },

@@ -18,7 +18,7 @@ export const DatePickerStory: DateTimeStory = {
   name: 'Date Picker',
   args: {
     id: 'dt-1',
-    type: 'DateTimeInput',
+    component: 'DateTimeInput',
     properties: {
       placeholder: 'Select a date',
       format: 'YYYY-MM-DD',
@@ -30,7 +30,7 @@ export const TimePickerStory: DateTimeStory = {
   name: 'Time Picker',
   args: {
     id: 'dt-2',
-    type: 'DateTimeInput',
+    component: 'DateTimeInput',
     properties: {
       placeholder: 'Select time',
       mode: 'time',
@@ -43,7 +43,7 @@ export const DateTimePickerStory: DateTimeStory = {
   name: 'Date-Time Picker',
   args: {
     id: 'dt-3',
-    type: 'DateTimeInput',
+    component: 'DateTimeInput',
     properties: {
       placeholder: 'Select date & time',
       mode: 'datetime',

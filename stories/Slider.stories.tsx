@@ -18,7 +18,7 @@ export const BasicSlider: SliderStory = {
   name: 'Basic Slider',
   args: {
     id: 'slider-1',
-    type: 'Slider',
+    component: 'Slider',
     properties: {
       min: 0,
       max: 100,
@@ -32,7 +32,7 @@ export const RangeSlider: SliderStory = {
   name: 'Range Slider',
   args: {
     id: 'slider-2',
-    type: 'Slider',
+    component: 'Slider',
     properties: {
       min: 0,
       max: 100,

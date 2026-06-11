@@ -54,7 +54,7 @@ export const BarChart: ChartStory = {
   name: 'Bar Chart',
   args: {
     id: 'chart-bar',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'bar',
       data: salesData,
@@ -76,7 +76,7 @@ export const LineChart: ChartStory = {
   name: 'Line Chart',
   args: {
     id: 'chart-line',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'line',
       data: salesData,
@@ -99,7 +99,7 @@ export const PieChart: ChartStory = {
   name: 'Pie Chart',
   args: {
     id: 'chart-pie',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'pie',
       data: categoryData,
@@ -121,7 +121,7 @@ export const DonutChart: ChartStory = {
   name: 'Donut Chart',
   args: {
     id: 'chart-donut',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'donut',
       data: categoryData,
@@ -143,7 +143,7 @@ export const ScatterChart: ChartStory = {
   name: 'Scatter Chart',
   args: {
     id: 'chart-scatter',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'scatter',
       data: scatterData,
@@ -165,7 +165,7 @@ export const AreaChart: ChartStory = {
   name: 'Area Chart',
   args: {
     id: 'chart-area',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'area',
       data: salesData,
@@ -188,7 +188,7 @@ export const RoseChart: ChartStory = {
   name: 'Rose Chart',
   args: {
     id: 'chart-rose',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'rose',
       data: categoryData,
@@ -210,7 +210,7 @@ export const FunnelChart: ChartStory = {
   name: 'Funnel Chart',
   args: {
     id: 'chart-funnel',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'funnel',
       data: [
@@ -237,7 +237,7 @@ export const RadarChart: ChartStory = {
   name: 'Radar Chart',
   args: {
     id: 'chart-radar',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'radar',
       data: [
@@ -265,7 +265,7 @@ export const GaugeChart: ChartStory = {
   name: 'Gauge Chart',
   args: {
     id: 'chart-gauge',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'gauge',
       data: [{ metric: 'CPU', usage: 72 }],
@@ -287,7 +287,7 @@ export const SankeyChart: ChartStory = {
   name: 'Sankey Chart',
   args: {
     id: 'chart-sankey',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'sankey',
       data: [],
@@ -320,7 +320,7 @@ export const CandlestickChart: ChartStory = {
   name: 'Candlestick Chart',
   args: {
     id: 'chart-candlestick',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'candlestick',
       data: [
@@ -348,7 +348,7 @@ export const SunburstChart: ChartStory = {
   name: 'Sunburst Chart',
   args: {
     id: 'chart-sunburst',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'sunburst',
       data: [],
@@ -395,7 +395,7 @@ export const ThemeRiverChart: ChartStory = {
   name: 'ThemeRiver Chart',
   args: {
     id: 'chart-themeriver',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'themeRiver',
       data: [
@@ -425,7 +425,7 @@ export const GraphChart: ChartStory = {
   name: 'Graph Chart',
   args: {
     id: 'chart-graph',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'graph',
       data: [],
@@ -459,7 +459,7 @@ export const ParallelChart: ChartStory = {
   name: 'Parallel Chart',
   args: {
     id: 'chart-parallel',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'parallel',
       data: [
@@ -470,10 +470,10 @@ export const ParallelChart: ChartStory = {
       config: {
         title: 'Car Specifications',
         dimensions: [
-          { dim: 0, type: 'value', key: 'power' },
-          { dim: 1, type: 'value', key: 'weight' },
-          { dim: 2, type: 'value', key: 'speed' },
-          { dim: 3, type: 'value', key: 'price' },
+          { dim: 0, component: 'value', key: 'power' },
+          { dim: 1, component: 'value', key: 'weight' },
+          { dim: 2, component: 'value', key: 'speed' },
+          { dim: 3, component: 'value', key: 'price' },
         ],
       },
       height: 400,
@@ -489,7 +489,7 @@ export const PictorialBarChart: ChartStory = {
   name: 'PictorialBar Chart',
   args: {
     id: 'chart-pictorialbar',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'pictorialBar',
       data: [
@@ -515,7 +515,7 @@ export const EffectScatterChart: ChartStory = {
   name: 'EffectScatter Chart',
   args: {
     id: 'chart-effectscatter',
-    type: 'Chart',
+    component: 'Chart',
     properties: {
       chartType: 'effectScatter',
       data: [

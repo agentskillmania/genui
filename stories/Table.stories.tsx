@@ -34,7 +34,7 @@ export const BasicTable: TableStory = {
   name: 'Basic Table',
   args: {
     id: 'table-1',
-    type: 'Table',
+    component: 'Table',
     properties: {
       columns: tableColumns,
       dataSource: tableData,
@@ -48,7 +48,7 @@ export const CompactTable: TableStory = {
   name: 'Compact Table',
   args: {
     id: 'table-2',
-    type: 'Table',
+    component: 'Table',
     properties: {
       columns: tableColumns,
       dataSource: tableData,
@@ -62,7 +62,7 @@ export const NoPaginationTable: TableStory = {
   name: 'Table without Pagination',
   args: {
     id: 'table-3',
-    type: 'Table',
+    component: 'Table',
     properties: {
       columns: tableColumns,
       dataSource: tableData,

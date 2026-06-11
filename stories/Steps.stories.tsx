@@ -17,7 +17,7 @@ export const Basic: Story = {
   name: 'Basic Steps',
   args: {
     id: 'steps-1',
-    type: 'Steps',
+    component: 'Steps',
     properties: {
       current: 1,
       items: [
@@ -33,7 +33,7 @@ export const VerticalSteps: Story = {
   name: 'Vertical Steps',
   args: {
     id: 'steps-2',
-    type: 'Steps',
+    component: 'Steps',
     properties: {
       current: 0,
       direction: 'vertical',
@@ -51,7 +51,7 @@ export const ErrorStep: Story = {
   name: 'Steps with Error',
   args: {
     id: 'steps-3',
-    type: 'Steps',
+    component: 'Steps',
     properties: {
       current: 1,
       status: 'error',

@@ -13,7 +13,7 @@ export const CountBadge: Story = {
   name: 'Count Badge',
   args: {
     id: 'badge-1',
-    type: 'Badge',
+    component: 'Badge',
     properties: {
       count: 5,
     },

@@ -13,7 +13,7 @@ export const ColoredTag: Story = {
   name: 'Colored Tag',
   args: {
     id: 'tag-1',
-    type: 'Tag',
+    component: 'Tag',
     properties: {
       text: 'Important',
       color: 'red',
@@ -25,7 +25,7 @@ export const ClosableTag: Story = {
   name: 'Closable Tag',
   args: {
     id: 'tag-2',
-    type: 'Tag',
+    component: 'Tag',
     properties: {
       text: 'Removable',
       closable: true,

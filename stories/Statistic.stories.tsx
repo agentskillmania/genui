@@ -13,7 +13,7 @@ export const RevenueStatistic: Story = {
   name: 'Revenue',
   args: {
     id: 'stat-1',
-    type: 'Statistic',
+    component: 'Statistic',
     properties: {
       title: 'Monthly Revenue',
       value: 125000,

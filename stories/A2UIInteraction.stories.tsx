@@ -47,30 +47,30 @@ class SimulatedAgent {
     m.getEngine().updateComponents('interaction', [
       // Header
       JSON.stringify({
-        id: 'title', type: 'Text',
+        id: 'title', component: 'Text',
         text: '🎯 Quick Product Survey', variant: 'h3',
       }),
       JSON.stringify({
-        id: 'subtitle', type: 'Text',
+        id: 'subtitle', component: 'Text',
         text: 'Help us understand your needs — takes 30 seconds!',
         style: { color: '#666', marginBottom: 16 },
       }),
 
       // Question 1: Satisfaction
       JSON.stringify({
-        id: 'q1-card', type: 'Card', title: '1. How satisfied are you?', style: { marginBottom: 16 },
+        id: 'q1-card', component: 'Card', title: '1. How satisfied are you?', style: { marginBottom: 16 }, child: 'satisfaction',
       }),
       JSON.stringify({
-        id: 'satisfaction', type: 'Rate', parentId: 'q1-card',
+        id: 'satisfaction', component: 'Rate',
         count: 5, allowHalf: true, value: 3,
       }),
 
       // Question 2: Usage frequency
       JSON.stringify({
-        id: 'q2-card', type: 'Card', title: '2. How often do you use our product?', style: { marginBottom: 16 },
+        id: 'q2-card', component: 'Card', title: '2. How often do you use our product?', style: { marginBottom: 16 }, child: 'frequency',
       }),
       JSON.stringify({
-        id: 'frequency', type: 'ChoicePicker', parentId: 'q2-card',
+        id: 'frequency', component: 'ChoicePicker',
         options: [
           { value: 'daily', label: '📱 Daily' },
           { value: 'weekly', label: '📅 Weekly' },
@@ -81,19 +81,19 @@ class SimulatedAgent {
 
       // Question 3: Budget slider
       JSON.stringify({
-        id: 'q3-card', type: 'Card', title: '3. Monthly budget for tools ($)', style: { marginBottom: 16 },
+        id: 'q3-card', component: 'Card', title: '3. Monthly budget for tools ($)', style: { marginBottom: 16 }, child: 'budget',
       }),
       JSON.stringify({
-        id: 'budget', type: 'Slider', parentId: 'q3-card',
+        id: 'budget', component: 'Slider',
         min: 0, max: 500, value: 100,
       }),
 
       // Question 4: Feature preference
       JSON.stringify({
-        id: 'q4-card', type: 'Card', title: '4. Most important feature?', style: { marginBottom: 16 },
+        id: 'q4-card', component: 'Card', title: '4. Most important feature?', style: { marginBottom: 16 }, child: 'feature',
       }),
       JSON.stringify({
-        id: 'feature', type: 'TreeSelect', parentId: 'q4-card',
+        id: 'feature', component: 'TreeSelect',
         placeholder: 'Pick one...',
         treeData: [
           {
@@ -121,16 +121,16 @@ class SimulatedAgent {
       }),
 
       // Submit button
-      JSON.stringify({ id: 'divider', type: 'Divider' }),
+      JSON.stringify({ id: 'divider', component: 'Divider' }),
       JSON.stringify({
-        id: 'submit-row', type: 'Row', justify: 'center',
+        id: 'submit-row', component: 'Row', justify: 'center', child: 'submit-col',
       }),
       JSON.stringify({
-        id: 'submit-col', type: 'Column', parentId: 'submit-row', span: 24,
-        style: { textAlign: 'center' },
+        id: 'submit-col', component: 'Column', span: 24,
+        style: { textAlign: 'center' }, child: 'submit-btn',
       }),
       JSON.stringify({
-        id: 'submit-btn', type: 'Button', parentId: 'submit-col',
+        id: 'submit-btn', component: 'Button',
         text: 'Submit Survey →', variant: 'primary', size: 'large',
       }),
     ]);
@@ -147,10 +147,10 @@ class SimulatedAgent {
       // Clear old components and show "thinking" state
       m.getEngine().updateComponents('interaction', [
         JSON.stringify({
-          id: 'loading', type: 'Card', style: { textAlign: 'center', padding: 48 },
+          id: 'loading', component: 'Card', style: { textAlign: 'center', padding: 48 }, child: 'spinner',
         }),
         JSON.stringify({
-          id: 'spinner', type: 'Spin', parentId: 'loading',
+          id: 'spinner', component: 'Spin',
           spinning: true, tip: 'AI is analyzing your responses...',
           size: 'large',
         }),
@@ -165,40 +165,40 @@ class SimulatedAgent {
       m.getEngine().updateComponents('interaction', [
         // Success banner
         JSON.stringify({
-          id: 'result-title', type: 'Text',
+          id: 'result-title', component: 'Text',
           text: '✅ Your Personalized Report', variant: 'h3',
         }),
         JSON.stringify({
-          id: 'result-alert', type: 'Alert',
+          id: 'result-alert', component: 'Alert',
           message: 'Based on your survey responses, here are our recommendations.',
           type: 'success', showIcon: true,
           style: { marginBottom: 16 },
         }),
 
         // Stats row
-        JSON.stringify({ id: 'stats-row', type: 'Row', gutter: 16 }),
-        JSON.stringify({ id: 'stat-col-1', type: 'Column', parentId: 'stats-row', span: 8 }),
+        JSON.stringify({ id: 'stats-row', component: 'Row', gutter: 16, children: ['stat-col-1', 'stat-col-2', 'stat-col-3'] }),
+        JSON.stringify({ id: 'stat-col-1', component: 'Column', span: 8, child: 'stat-1' }),
         JSON.stringify({
-          id: 'stat-1', type: 'Statistic', parentId: 'stat-col-1',
+          id: 'stat-1', component: 'Statistic',
           title: 'Match Score', value: 94, suffix: '%',
         }),
-        JSON.stringify({ id: 'stat-col-2', type: 'Column', parentId: 'stats-row', span: 8 }),
+        JSON.stringify({ id: 'stat-col-2', component: 'Column', span: 8, child: 'stat-2' }),
         JSON.stringify({
-          id: 'stat-2', type: 'Statistic', parentId: 'stat-col-2',
+          id: 'stat-2', component: 'Statistic',
           title: 'Recommended Plan', value: 'Pro', prefix: '$49/mo',
         }),
-        JSON.stringify({ id: 'stat-col-3', type: 'Column', parentId: 'stats-row', span: 8 }),
+        JSON.stringify({ id: 'stat-col-3', component: 'Column', span: 8, child: 'stat-3' }),
         JSON.stringify({
-          id: 'stat-3', type: 'Statistic', parentId: 'stat-col-3',
+          id: 'stat-3', component: 'Statistic',
           title: 'Est. ROI', value: 340, suffix: '%', precision: 0,
         }),
 
         // Recommendation chart
         JSON.stringify({
-          id: 'chart-card', type: 'Card', title: 'Feature Fit Analysis', style: { marginTop: 24 },
+          id: 'chart-card', component: 'Card', title: 'Feature Fit Analysis', style: { marginTop: 24 }, child: 'radar-chart',
         }),
         JSON.stringify({
-          id: 'radar-chart', type: 'Chart', parentId: 'chart-card',
+          id: 'radar-chart', component: 'Chart',
           chartType: 'radar', height: 350,
           data: [
             { dimension: 'Performance', value: 92 },
@@ -212,10 +212,10 @@ class SimulatedAgent {
 
         // Recommendations
         JSON.stringify({
-          id: 'rec-card', type: 'Card', title: 'Top Recommendations', style: { marginTop: 24 },
+          id: 'rec-card', component: 'Card', title: 'Top Recommendations', style: { marginTop: 24 }, child: 'rec-timeline',
         }),
         JSON.stringify({
-          id: 'rec-timeline', type: 'Timeline', parentId: 'rec-card',
+          id: 'rec-timeline', component: 'Timeline',
           items: [
             { children: 'Enable API Access — fits your integration needs', color: 'green' },
             { children: 'Upgrade to Pro plan — within your budget range', color: 'blue' },
@@ -224,18 +224,18 @@ class SimulatedAgent {
         }),
 
         // Actions
-        JSON.stringify({ id: 'footer-divider', type: 'Divider' }),
-        JSON.stringify({ id: 'action-row', type: 'Row', justify: 'center' }),
+        JSON.stringify({ id: 'footer-divider', component: 'Divider' }),
+        JSON.stringify({ id: 'action-row', component: 'Row', justify: 'center', child: 'action-col' }),
         JSON.stringify({
-          id: 'action-col', type: 'Column', parentId: 'action-row', span: 24,
-          style: { textAlign: 'center' },
+          id: 'action-col', component: 'Column', span: 24,
+          style: { textAlign: 'center' }, children: ['upgrade-btn', 'retake-btn'],
         }),
         JSON.stringify({
-          id: 'upgrade-btn', type: 'Button', parentId: 'action-col',
+          id: 'upgrade-btn', component: 'Button',
           text: '🚀 Upgrade to Pro', variant: 'primary', size: 'large',
         }),
         JSON.stringify({
-          id: 'retake-btn', type: 'Button', parentId: 'action-col',
+          id: 'retake-btn', component: 'Button',
           text: 'Retake Survey', style: { marginLeft: 12 },
         }),
       ]);
@@ -261,17 +261,17 @@ class SimulatedAgent {
     const m = this.manager;
     m.getEngine().updateComponents('interaction', [
       JSON.stringify({
-        id: 'result-title', type: 'Text',
+        id: 'result-title', component: 'Text',
         text: '🎉 Welcome to Pro!', variant: 'h2',
         style: { textAlign: 'center', marginTop: 48 },
       }),
       JSON.stringify({
-        id: 'result-subtitle', type: 'Text',
+        id: 'result-subtitle', component: 'Text',
         text: 'Your account has been upgraded. Check your email for next steps.',
         style: { textAlign: 'center', color: '#666', marginTop: 8 },
       }),
       JSON.stringify({
-        id: 'success-result', type: 'Result', status: 'success',
+        id: 'success-result', component: 'Result', status: 'success',
         title: 'Upgrade Complete',
         subTitle: 'You now have access to all Pro features',
         style: { marginTop: 24 },

@@ -18,7 +18,7 @@ export const BasicMarkdown: MarkdownStory = {
   name: 'Basic Markdown',
   args: {
     id: 'md-1',
-    type: 'Markdown',
+    component: 'Markdown',
     properties: {
       text: [
         '# GenUI Markdown',
@@ -43,7 +43,7 @@ export const CodeBlock: MarkdownStory = {
   name: 'Markdown with Code Block',
   args: {
     id: 'md-2',
-    type: 'Markdown',
+    component: 'Markdown',
     properties: {
       text: [
         '### Example Code',

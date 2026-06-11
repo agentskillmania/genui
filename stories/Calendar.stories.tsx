@@ -13,7 +13,7 @@ export const BasicCalendar: Story = {
   name: 'Basic Calendar',
   args: {
     id: 'cal-1',
-    type: 'Calendar',
+    component: 'Calendar',
     properties: {
       fullscreen: false,
     },

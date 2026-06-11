@@ -45,27 +45,27 @@ const DashboardBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
-        JSON.stringify({ id: 'title', type: 'Text', text: '📊 Sales Analytics Dashboard', variant: 'h2' }),
-        JSON.stringify({ id: 'stats-row', type: 'Row', gutter: 16 }),
+        JSON.stringify({ id: 'title', component: 'Text', text: '📊 Sales Analytics Dashboard', variant: 'h2' }),
+        JSON.stringify({ id: 'stats-row', component: 'Row', gutter: 16, children: ['stat-col-1', 'stat-col-2', 'stat-col-3'] }),
         JSON.stringify({
-          id: 'stat-col-1', type: 'Column', parentId: 'stats-row', span: 8,
+          id: 'stat-col-1', component: 'Column', span: 8, child: 'stat-1',
         }),
         JSON.stringify({
-          id: 'stat-1', type: 'Statistic', parentId: 'stat-col-1',
+          id: 'stat-1', component: 'Statistic',
           title: 'Total Revenue', value: 128930, prefix: '$', precision: 0,
         }),
         JSON.stringify({
-          id: 'stat-col-2', type: 'Column', parentId: 'stats-row', span: 8,
+          id: 'stat-col-2', component: 'Column', span: 8, child: 'stat-2',
         }),
         JSON.stringify({
-          id: 'stat-2', type: 'Statistic', parentId: 'stat-col-2',
+          id: 'stat-2', component: 'Statistic',
           title: 'Orders', value: 2847, suffix: 'orders',
         }),
         JSON.stringify({
-          id: 'stat-col-3', type: 'Column', parentId: 'stats-row', span: 8,
+          id: 'stat-col-3', component: 'Column', span: 8, child: 'stat-3',
         }),
         JSON.stringify({
-          id: 'stat-3', type: 'Statistic', parentId: 'stat-col-3',
+          id: 'stat-3', component: 'Statistic',
           title: 'Avg. Order', value: 45.3, prefix: '$', precision: 2,
         }),
       ]);
@@ -76,10 +76,10 @@ const DashboardBuilder: React.FC = () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
         JSON.stringify({
-          id: 'chart-section', type: 'Card', title: 'Monthly Revenue', style: { marginTop: 24 },
+          id: 'chart-section', component: 'Card', title: 'Monthly Revenue', style: { marginTop: 24 }, child: 'revenue-chart',
         }),
         JSON.stringify({
-          id: 'revenue-chart', type: 'Chart', parentId: 'chart-section',
+          id: 'revenue-chart', component: 'Chart',
           chartType: 'bar', height: 350,
           data: [
             { month: 'Jan', revenue: 8200 }, { month: 'Feb', revenue: 9100 },
@@ -99,16 +99,16 @@ const DashboardBuilder: React.FC = () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
         JSON.stringify({
-          id: 'charts-row', type: 'Row', gutter: 16, style: { marginTop: 24 },
+          id: 'charts-row', component: 'Row', gutter: 16, style: { marginTop: 24 }, children: ['category-col', 'funnel-col'],
         }),
         JSON.stringify({
-          id: 'category-col', type: 'Column', parentId: 'charts-row', span: 12,
+          id: 'category-col', component: 'Column', span: 12, child: 'category-card',
         }),
         JSON.stringify({
-          id: 'category-card', type: 'Card', parentId: 'category-col', title: 'Revenue by Category',
+          id: 'category-card', component: 'Card', title: 'Revenue by Category', child: 'category-chart',
         }),
         JSON.stringify({
-          id: 'category-chart', type: 'Chart', parentId: 'category-card',
+          id: 'category-chart', component: 'Chart',
           chartType: 'donut', height: 300,
           data: [
             { category: 'Electronics', revenue: 4500 },
@@ -120,13 +120,13 @@ const DashboardBuilder: React.FC = () => {
           config: { angleField: 'revenue', colorField: 'category' },
         }),
         JSON.stringify({
-          id: 'funnel-col', type: 'Column', parentId: 'charts-row', span: 12,
+          id: 'funnel-col', component: 'Column', span: 12, child: 'funnel-card',
         }),
         JSON.stringify({
-          id: 'funnel-card', type: 'Card', parentId: 'funnel-col', title: 'Conversion Funnel',
+          id: 'funnel-card', component: 'Card', title: 'Conversion Funnel', child: 'funnel-chart',
         }),
         JSON.stringify({
-          id: 'funnel-chart', type: 'Chart', parentId: 'funnel-card',
+          id: 'funnel-chart', component: 'Chart',
           chartType: 'funnel', height: 300,
           data: [
             { stage: 'Visits', count: 10000 },
@@ -144,10 +144,10 @@ const DashboardBuilder: React.FC = () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
         JSON.stringify({
-          id: 'table-card', type: 'Card', title: 'Top Products', style: { marginTop: 24 },
+          id: 'table-card', component: 'Card', title: 'Top Products', style: { marginTop: 24 }, child: 'products-table',
         }),
         JSON.stringify({
-          id: 'products-table', type: 'Table', parentId: 'table-card',
+          id: 'products-table', component: 'Table',
           columns: [
             { title: 'Product', dataIndex: 'product', key: 'product' },
             { title: 'Category', dataIndex: 'category', key: 'category' },
@@ -170,21 +170,21 @@ const DashboardBuilder: React.FC = () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('dashboard', [
         JSON.stringify({
-          id: 'footer-divider', type: 'Divider', style: { marginTop: 24 },
+          id: 'footer-divider', component: 'Divider', style: { marginTop: 24 },
         }),
         JSON.stringify({
-          id: 'footer-row', type: 'Row', justify: 'center',
+          id: 'footer-row', component: 'Row', justify: 'center', child: 'footer-col',
         }),
         JSON.stringify({
-          id: 'footer-col', type: 'Column', parentId: 'footer-row', span: 24,
-          style: { textAlign: 'center' },
+          id: 'footer-col', component: 'Column', span: 24,
+          style: { textAlign: 'center' }, children: ['export-btn', 'refresh-btn'],
         }),
         JSON.stringify({
-          id: 'export-btn', type: 'Button', parentId: 'footer-col',
+          id: 'export-btn', component: 'Button',
           text: 'Export Report', variant: 'primary',
         }),
         JSON.stringify({
-          id: 'refresh-btn', type: 'Button', parentId: 'footer-col',
+          id: 'refresh-btn', component: 'Button',
           text: 'Refresh Data', style: { marginLeft: 8 },
         }),
       ]);

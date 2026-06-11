@@ -13,7 +13,7 @@ export const InfoAlert: Story = {
   name: 'Info Alert',
   args: {
     id: 'alert-1',
-    type: 'Alert',
+    component: 'Alert',
     properties: {
       message: 'Informational note',
       type: 'info',
@@ -27,7 +27,7 @@ export const ErrorAlert: Story = {
   name: 'Error Alert',
   args: {
     id: 'alert-2',
-    type: 'Alert',
+    component: 'Alert',
     properties: {
       message: 'Something went wrong',
       description: 'Please try again later',

@@ -13,7 +13,7 @@ export const BasicFloatButton: Story = {
   name: 'Basic Float Button',
   args: {
     id: 'fb-1',
-    type: 'FloatButton',
+    component: 'FloatButton',
     properties: { tooltip: 'Back to top', type: 'primary' },
   },
 };

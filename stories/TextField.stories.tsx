@@ -21,7 +21,7 @@ export const SingleLine: TextFieldStory = {
   name: 'Single-line Text Field',
   args: {
     id: 'tf-1',
-    type: 'TextField',
+    component: 'TextField',
     properties: {
       placeholder: 'Enter your name...',
       size: 'middle',
@@ -33,7 +33,7 @@ export const WithValue: TextFieldStory = {
   name: 'Text Field with Value',
   args: {
     id: 'tf-2',
-    type: 'TextField',
+    component: 'TextField',
     properties: {
       value: 'Pre-filled value',
       size: 'middle',
@@ -45,7 +45,7 @@ export const Multiline: TextFieldStory = {
   name: 'Multiline Text Field',
   args: {
     id: 'tf-3',
-    type: 'TextField',
+    component: 'TextField',
     properties: {
       placeholder: 'Enter a long description...',
       variant: 'multiline',
@@ -57,7 +57,7 @@ export const DisabledField: TextFieldStory = {
   name: 'Disabled Text Field',
   args: {
     id: 'tf-4',
-    type: 'TextField',
+    component: 'TextField',
     properties: {
       value: 'Cannot edit this',
       disabled: true,

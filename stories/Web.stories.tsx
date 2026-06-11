@@ -16,7 +16,7 @@ export const EmbeddedWebPage: Story = {
   name: 'Embedded Web Page',
   args: {
     id: 'web-1',
-    type: 'Web',
+    component: 'Web',
     properties: {
       url: 'https://example.com',
       width: '100%',

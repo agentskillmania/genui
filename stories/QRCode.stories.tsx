@@ -13,7 +13,7 @@ export const BasicQRCode: Story = {
   name: 'Basic QR Code',
   args: {
     id: 'qr-1',
-    type: 'QRCode',
+    component: 'QRCode',
     properties: { value: 'https://example.com', size: 160, color: '#000000' },
   },
 };

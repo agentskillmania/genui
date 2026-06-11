@@ -13,7 +13,7 @@ export const BasicNumber: Story = {
   name: 'Basic Number Input',
   args: {
     id: 'num-1',
-    type: 'InputNumber',
+    component: 'InputNumber',
     properties: { value: 42, min: 0, max: 100, step: 1 },
   },
 };

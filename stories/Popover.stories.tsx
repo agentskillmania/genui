@@ -14,7 +14,7 @@ export const ClickPopover: Story = {
   name: 'Click Popover',
   args: {
     id: 'pop-1',
-    type: 'Popover',
+    component: 'Popover',
     properties: { title: 'Details', content: 'More information here', trigger: 'click' },
     children: <Button id="b1" type="Button" properties={{ text: 'Click me' }} />,
   },

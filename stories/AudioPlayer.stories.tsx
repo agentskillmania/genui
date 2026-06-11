@@ -18,7 +18,7 @@ export const BasicAudio: AudioStory = {
   name: 'Basic Audio Player',
   args: {
     id: 'audio-1',
-    type: 'AudioPlayer',
+    component: 'AudioPlayer',
     properties: {
       url: 'https://www.w3schools.com/html/horse.mp3',
       controls: true,

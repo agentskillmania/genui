@@ -13,7 +13,7 @@ export const BasicUpload: Story = {
   name: 'Basic Upload',
   args: {
     id: 'up-1',
-    type: 'Upload',
+    component: 'Upload',
     properties: { buttonText: 'Upload File', maxCount: 3 },
   },
 };

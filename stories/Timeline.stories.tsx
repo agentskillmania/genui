@@ -13,7 +13,7 @@ export const ActivityTimeline: Story = {
   name: 'Activity Timeline',
   args: {
     id: 'tl-1',
-    type: 'Timeline',
+    component: 'Timeline',
     properties: {
       items: [
         { children: 'Build started', color: 'green' },

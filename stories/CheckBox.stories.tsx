@@ -18,7 +18,7 @@ export const Unchecked: CheckBoxStory = {
   name: 'Unchecked',
   args: {
     id: 'cb-1',
-    type: 'CheckBox',
+    component: 'CheckBox',
     properties: { checked: false },
   },
 };
@@ -27,7 +27,7 @@ export const Checked: CheckBoxStory = {
   name: 'Checked',
   args: {
     id: 'cb-2',
-    type: 'CheckBox',
+    component: 'CheckBox',
     properties: { checked: true },
   },
 };
@@ -36,7 +36,7 @@ export const Indeterminate: CheckBoxStory = {
   name: 'Indeterminate',
   args: {
     id: 'cb-3',
-    type: 'CheckBox',
+    component: 'CheckBox',
     properties: { indeterminate: true },
   },
 };
@@ -45,7 +45,7 @@ export const DisabledCheckBox: CheckBoxStory = {
   name: 'Disabled',
   args: {
     id: 'cb-4',
-    type: 'CheckBox',
+    component: 'CheckBox',
     properties: { checked: true, disabled: true },
   },
 };

@@ -21,7 +21,7 @@ export const Html5Video: VideoStory = {
   name: 'HTML5 Video Player',
   args: {
     id: 'video-1',
-    type: 'Video',
+    component: 'Video',
     properties: {
       url: 'https://www.w3schools.com/html/mov_bbb.mp4',
       width: '100%',
@@ -35,7 +35,7 @@ export const MutedAutoplayVideo: VideoStory = {
   name: 'Muted Autoplay Video',
   args: {
     id: 'video-2',
-    type: 'Video',
+    component: 'Video',
     properties: {
       url: 'https://www.w3schools.com/html/mov_bbb.mp4',
       width: '100%',

@@ -13,7 +13,7 @@ export const HorizontalSplit: Story = {
   name: 'Horizontal Split',
   args: {
     id: 'split-1',
-    type: 'Splitter',
+    component: 'Splitter',
     properties: { layout: 'horizontal' },
     children: (
       <>

@@ -13,7 +13,7 @@ export const BasicColorPicker: Story = {
   name: 'Basic Color Picker',
   args: {
     id: 'cp-1',
-    type: 'ColorPicker',
+    component: 'ColorPicker',
     properties: { value: '#1677ff', showText: true },
   },
 };

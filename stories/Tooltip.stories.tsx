@@ -14,7 +14,7 @@ export const HoverTooltip: Story = {
   name: 'Hover Tooltip',
   args: {
     id: 'tip-1',
-    type: 'Tooltip',
+    component: 'Tooltip',
     properties: { title: 'This is a tooltip', placement: 'top' },
     children: <Button id="b1" type="Button" properties={{ text: 'Hover me' }} />,
   },

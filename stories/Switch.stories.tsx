@@ -13,7 +13,7 @@ export const BasicSwitch: Story = {
   name: 'Basic Switch',
   args: {
     id: 'sw-1',
-    type: 'Switch',
+    component: 'Switch',
     properties: { checked: false },
   },
 };
@@ -22,7 +22,7 @@ export const CheckedSwitch: Story = {
   name: 'Checked Switch',
   args: {
     id: 'sw-2',
-    type: 'Switch',
+    component: 'Switch',
     properties: { checked: true, loading: false },
   },
 };

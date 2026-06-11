@@ -13,7 +13,7 @@ export const BasicAutoComplete: Story = {
   name: 'Basic AutoComplete',
   args: {
     id: 'ac-1',
-    type: 'AutoComplete',
+    component: 'AutoComplete',
     properties: {
       placeholder: 'Type to search',
       options: [

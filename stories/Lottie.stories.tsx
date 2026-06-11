@@ -18,7 +18,7 @@ export const LoadingAnimation: LottieStory = {
   name: 'Lottie Loading Animation',
   args: {
     id: 'lottie-1',
-    type: 'Lottie',
+    component: 'Lottie',
     properties: {
       url: 'https://assets2.lottiefiles.com/packages/lf20_UJNc2t.json',
       width: 200,

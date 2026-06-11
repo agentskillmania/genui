@@ -16,7 +16,7 @@ export const HomeIcon: Story = {
   name: 'Home Icon',
   args: {
     id: 'icon-home',
-    type: 'Icon',
+    component: 'Icon',
     properties: { name: 'HomeOutlined', size: 32, color: '#1677ff' },
   },
 };
@@ -25,7 +25,7 @@ export const CheckIcon: Story = {
   name: 'Check Circle Icon',
   args: {
     id: 'icon-check',
-    type: 'Icon',
+    component: 'Icon',
     properties: { name: 'CheckCircleOutlined', size: 40, color: '#52c41a' },
   },
 };
@@ -34,7 +34,7 @@ export const SettingsIcon: Story = {
   name: 'Settings Icon',
   args: {
     id: 'icon-settings',
-    type: 'Icon',
+    component: 'Icon',
     properties: { name: 'SettingOutlined', size: 28 },
   },
 };

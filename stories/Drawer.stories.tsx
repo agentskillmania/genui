@@ -14,7 +14,7 @@ export const OpenDrawer: Story = {
   name: 'Open Drawer',
   args: {
     id: 'drawer-1',
-    type: 'Drawer',
+    component: 'Drawer',
     properties: {
       title: 'Settings',
       open: true,

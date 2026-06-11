@@ -13,7 +13,7 @@ export const ActiveSkeleton: Story = {
   name: 'Active Skeleton',
   args: {
     id: 'skel-1',
-    type: 'Skeleton',
+    component: 'Skeleton',
     properties: {
       active: true,
       avatar: true,

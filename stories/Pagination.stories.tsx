@@ -17,7 +17,7 @@ export const Basic: Story = {
   name: 'Basic Pagination',
   args: {
     id: 'pagination-1',
-    type: 'Pagination',
+    component: 'Pagination',
     properties: {
       current: 1,
       total: 100,
@@ -30,7 +30,7 @@ export const WithSizeChanger: Story = {
   name: 'Pagination with Size Changer',
   args: {
     id: 'pagination-2',
-    type: 'Pagination',
+    component: 'Pagination',
     properties: {
       current: 3,
       total: 200,
@@ -45,7 +45,7 @@ export const Mini: Story = {
   name: 'Mini Pagination',
   args: {
     id: 'pagination-3',
-    type: 'Pagination',
+    component: 'Pagination',
     properties: {
       current: 1,
       total: 50,

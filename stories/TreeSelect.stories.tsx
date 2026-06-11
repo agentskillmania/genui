@@ -13,7 +13,7 @@ export const BasicTreeSelect: Story = {
   name: 'Basic Tree Select',
   args: {
     id: 'ts-1',
-    type: 'TreeSelect',
+    component: 'TreeSelect',
     properties: {
       placeholder: 'Select node',
       treeData: [

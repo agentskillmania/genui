@@ -13,7 +13,7 @@ export const StarRating: Story = {
   name: 'Star Rating',
   args: {
     id: 'rate-1',
-    type: 'Rate',
+    component: 'Rate',
     properties: { value: 3, count: 5, allowHalf: true },
   },
 };

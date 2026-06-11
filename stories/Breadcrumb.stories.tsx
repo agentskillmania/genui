@@ -17,7 +17,7 @@ export const Basic: Story = {
   name: 'Basic Breadcrumb',
   args: {
     id: 'breadcrumb-1',
-    type: 'Breadcrumb',
+    component: 'Breadcrumb',
     properties: {
       items: [
         { title: 'Home' },
@@ -32,7 +32,7 @@ export const WithSeparator: Story = {
   name: 'Breadcrumb with Custom Separator',
   args: {
     id: 'breadcrumb-2',
-    type: 'Breadcrumb',
+    component: 'Breadcrumb',
     properties: {
       items: [
         { title: 'Dashboard' },

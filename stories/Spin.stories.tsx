@@ -13,7 +13,7 @@ export const BasicSpin: Story = {
   name: 'Basic Spin',
   args: {
     id: 'spin-1',
-    type: 'Spin',
+    component: 'Spin',
     properties: {
       spinning: true,
       tip: 'Loading...',

@@ -13,7 +13,7 @@ export const UserProfile: Story = {
   name: 'User Profile',
   args: {
     id: 'desc-1',
-    type: 'Descriptions',
+    component: 'Descriptions',
     properties: {
       title: 'User Info',
       bordered: true,

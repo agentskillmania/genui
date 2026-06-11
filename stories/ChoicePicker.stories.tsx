@@ -25,7 +25,7 @@ export const SingleSelect: ChoicePickerStory = {
   name: 'Single Select',
   args: {
     id: 'cp-1',
-    type: 'ChoicePicker',
+    component: 'ChoicePicker',
     properties: {
       placeholder: 'Select a fruit',
       options: fruitOptions,
@@ -38,7 +38,7 @@ export const MultiSelect: ChoicePickerStory = {
   name: 'Multiple Select',
   args: {
     id: 'cp-2',
-    type: 'ChoicePicker',
+    component: 'ChoicePicker',
     properties: {
       placeholder: 'Select fruits',
       options: fruitOptions,
@@ -51,7 +51,7 @@ export const PreSelected: ChoicePickerStory = {
   name: 'Pre-selected Value',
   args: {
     id: 'cp-3',
-    type: 'ChoicePicker',
+    component: 'ChoicePicker',
     properties: {
       value: 'banana',
       options: fruitOptions,

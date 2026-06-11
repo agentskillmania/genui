@@ -13,7 +13,7 @@ export const Accordion: Story = {
   name: 'Accordion',
   args: {
     id: 'col-1',
-    type: 'Collapse',
+    component: 'Collapse',
     properties: {
       items: [
         { key: '1', label: 'Section A', children: 'Content for section A' },

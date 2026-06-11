@@ -13,7 +13,7 @@ export const SuccessResult: Story = {
   name: 'Success Result',
   args: {
     id: 'res-1',
-    type: 'Result',
+    component: 'Result',
     properties: {
       status: 'success',
       title: 'Operation Completed',

@@ -17,7 +17,7 @@ export const Basic: Story = {
   name: 'Basic Dropdown',
   args: {
     id: 'dropdown-1',
-    type: 'Dropdown',
+    component: 'Dropdown',
     properties: {
       label: 'Actions',
       trigger: 'click',
@@ -34,7 +34,7 @@ export const WithPlacement: Story = {
   name: 'Dropdown with Placement',
   args: {
     id: 'dropdown-2',
-    type: 'Dropdown',
+    component: 'Dropdown',
     properties: {
       label: 'Options',
       trigger: 'click',

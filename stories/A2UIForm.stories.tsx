@@ -41,34 +41,34 @@ const FormBuilder: React.FC = () => {
     () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
-        JSON.stringify({ id: 'title', type: 'Text', text: '📝 Create Account', variant: 'h2' }),
+        JSON.stringify({ id: 'title', component: 'Text', text: '📝 Create Account', variant: 'h2' }),
         JSON.stringify({
-          id: 'info-alert', type: 'Alert',
+          id: 'info-alert', component: 'Alert',
           message: 'Fields marked with * are required', type: 'info', showIcon: true,
           style: { marginBottom: 16 },
         }),
         JSON.stringify({
-          id: 'personal-card', type: 'Card', title: 'Personal Information', style: { marginBottom: 16 },
+          id: 'personal-card', component: 'Card', title: 'Personal Information', style: { marginBottom: 16 }, children: ['name-row', 'email'],
         }),
         JSON.stringify({
-          id: 'name-row', type: 'Row', parentId: 'personal-card', gutter: 16,
+          id: 'name-row', component: 'Row', gutter: 16, children: ['fname-col', 'lname-col'],
         }),
         JSON.stringify({
-          id: 'fname-col', type: 'Column', parentId: 'name-row', span: 12,
+          id: 'fname-col', component: 'Column', span: 12, child: 'first-name',
         }),
         JSON.stringify({
-          id: 'first-name', type: 'TextField', parentId: 'fname-col',
+          id: 'first-name', component: 'TextField',
           label: 'First Name *', placeholder: 'John',
         }),
         JSON.stringify({
-          id: 'lname-col', type: 'Column', parentId: 'name-row', span: 12,
+          id: 'lname-col', component: 'Column', span: 12, child: 'last-name',
         }),
         JSON.stringify({
-          id: 'last-name', type: 'TextField', parentId: 'lname-col',
+          id: 'last-name', component: 'TextField',
           label: 'Last Name *', placeholder: 'Doe',
         }),
         JSON.stringify({
-          id: 'email', type: 'TextField', parentId: 'personal-card',
+          id: 'email', component: 'TextField',
           label: 'Email *', placeholder: 'john@example.com',
           style: { marginTop: 16 },
         }),
@@ -80,14 +80,14 @@ const FormBuilder: React.FC = () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
         JSON.stringify({
-          id: 'prefs-card', type: 'Card', title: 'Preferences', style: { marginBottom: 16 },
+          id: 'prefs-card', component: 'Card', title: 'Preferences', style: { marginBottom: 16 }, children: ['role-label', 'role-picker', 'exp-label', 'experience', 'theme-row', 'fav-color-label', 'fav-color'],
         }),
         JSON.stringify({
-          id: 'role-label', type: 'Text', parentId: 'prefs-card',
+          id: 'role-label', component: 'Text',
           text: 'Select your role:', style: { marginBottom: 8 },
         }),
         JSON.stringify({
-          id: 'role-picker', type: 'ChoicePicker', parentId: 'prefs-card',
+          id: 'role-picker', component: 'ChoicePicker',
           options: [
             { value: 'developer', label: 'Developer' },
             { value: 'designer', label: 'Designer' },
@@ -97,43 +97,43 @@ const FormBuilder: React.FC = () => {
           style: { marginBottom: 16 },
         }),
         JSON.stringify({
-          id: 'exp-label', type: 'Text', parentId: 'prefs-card',
+          id: 'exp-label', component: 'Text',
           text: 'Experience Level:', style: { marginBottom: 8 },
         }),
         JSON.stringify({
-          id: 'experience', type: 'Rate', parentId: 'prefs-card',
+          id: 'experience', component: 'Rate',
           count: 5, allowHalf: true, value: 3,
           style: { marginBottom: 16 },
         }),
         JSON.stringify({
-          id: 'theme-row', type: 'Row', parentId: 'prefs-card', gutter: 16,
+          id: 'theme-row', component: 'Row', gutter: 16, children: ['theme-col', 'notif-col'],
         }),
         JSON.stringify({
-          id: 'theme-col', type: 'Column', parentId: 'theme-row', span: 12,
+          id: 'theme-col', component: 'Column', span: 12, children: ['dark-mode', 'dark-label'],
         }),
         JSON.stringify({
-          id: 'dark-mode', type: 'Switch', parentId: 'theme-col',
+          id: 'dark-mode', component: 'Switch',
         }),
         JSON.stringify({
-          id: 'dark-label', type: 'Text', parentId: 'theme-col',
+          id: 'dark-label', component: 'Text',
           text: 'Enable Dark Mode',
         }),
         JSON.stringify({
-          id: 'notif-col', type: 'Column', parentId: 'theme-row', span: 12,
+          id: 'notif-col', component: 'Column', span: 12, children: ['notifications', 'notif-label'],
         }),
         JSON.stringify({
-          id: 'notifications', type: 'Switch', parentId: 'notif-col',
+          id: 'notifications', component: 'Switch',
         }),
         JSON.stringify({
-          id: 'notif-label', type: 'Text', parentId: 'notif-col',
+          id: 'notif-label', component: 'Text',
           text: 'Email Notifications',
         }),
         JSON.stringify({
-          id: 'fav-color-label', type: 'Text', parentId: 'prefs-card',
+          id: 'fav-color-label', component: 'Text',
           text: 'Favorite Color:', style: { marginTop: 16, marginBottom: 8 },
         }),
         JSON.stringify({
-          id: 'fav-color', type: 'ColorPicker', parentId: 'prefs-card',
+          id: 'fav-color', component: 'ColorPicker',
           value: '#1677ff', showText: true,
         }),
       ]);
@@ -144,14 +144,14 @@ const FormBuilder: React.FC = () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
         JSON.stringify({
-          id: 'team-card', type: 'Card', title: 'Team & Location', style: { marginBottom: 16 },
+          id: 'team-card', component: 'Card', title: 'Team & Location', style: { marginBottom: 16 }, children: ['dept-label', 'department', 'team-label', 'team-tree', 'commute-label', 'commute'],
         }),
         JSON.stringify({
-          id: 'dept-label', type: 'Text', parentId: 'team-card',
+          id: 'dept-label', component: 'Text',
           text: 'Department:', style: { marginBottom: 8 },
         }),
         JSON.stringify({
-          id: 'department', type: 'Cascader', parentId: 'team-card',
+          id: 'department', component: 'Cascader',
           placeholder: 'Select department',
           options: [
             {
@@ -173,11 +173,11 @@ const FormBuilder: React.FC = () => {
           style: { marginBottom: 16, width: '100%' },
         }),
         JSON.stringify({
-          id: 'team-label', type: 'Text', parentId: 'team-card',
+          id: 'team-label', component: 'Text',
           text: 'Select Teams:', style: { marginBottom: 8 },
         }),
         JSON.stringify({
-          id: 'team-tree', type: 'TreeSelect', parentId: 'team-card',
+          id: 'team-tree', component: 'TreeSelect',
           multiple: true, showSearch: true,
           treeData: [
             {
@@ -199,11 +199,11 @@ const FormBuilder: React.FC = () => {
           style: { marginBottom: 16, width: '100%' },
         }),
         JSON.stringify({
-          id: 'commute-label', type: 'Text', parentId: 'team-card',
+          id: 'commute-label', component: 'Text',
           text: 'Commute Distance (km):',
         }),
         JSON.stringify({
-          id: 'commute', type: 'Slider', parentId: 'team-card',
+          id: 'commute', component: 'Slider',
           min: 0, max: 100, value: 15,
         }),
       ]);
@@ -214,21 +214,21 @@ const FormBuilder: React.FC = () => {
       const m = managerRef.current;
       m.getEngine().updateComponents('form', [
         JSON.stringify({
-          id: 'footer-divider', type: 'Divider',
+          id: 'footer-divider', component: 'Divider',
         }),
         JSON.stringify({
-          id: 'action-row', type: 'Row', justify: 'center',
+          id: 'action-row', component: 'Row', justify: 'center', child: 'action-col',
         }),
         JSON.stringify({
-          id: 'action-col', type: 'Column', parentId: 'action-row', span: 24,
-          style: { textAlign: 'center' },
+          id: 'action-col', component: 'Column', span: 24,
+          style: { textAlign: 'center' }, children: ['submit-btn', 'reset-btn'],
         }),
         JSON.stringify({
-          id: 'submit-btn', type: 'Button', parentId: 'action-col',
+          id: 'submit-btn', component: 'Button',
           text: 'Create Account', variant: 'primary', size: 'large',
         }),
         JSON.stringify({
-          id: 'reset-btn', type: 'Button', parentId: 'action-col',
+          id: 'reset-btn', component: 'Button',
           text: 'Reset', style: { marginLeft: 12 },
         }),
       ]);

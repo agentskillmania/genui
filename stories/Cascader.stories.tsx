@@ -13,7 +13,7 @@ export const RegionCascader: Story = {
   name: 'Region Cascader',
   args: {
     id: 'cas-1',
-    type: 'Cascader',
+    component: 'Cascader',
     properties: {
       placeholder: 'Select region',
       options: [

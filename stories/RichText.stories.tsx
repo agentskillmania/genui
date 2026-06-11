@@ -18,7 +18,7 @@ export const FormattedRichText: RichTextStory = {
   name: 'Formatted Rich Text',
   args: {
     id: 'rt-1',
-    type: 'RichText',
+    component: 'RichText',
     properties: {
       text: [
         '<h2>Rich Text Content</h2>',

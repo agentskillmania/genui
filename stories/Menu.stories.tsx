@@ -17,7 +17,7 @@ export const Basic: Story = {
   name: 'Basic Menu',
   args: {
     id: 'menu-1',
-    type: 'Menu',
+    component: 'Menu',
     properties: {
       mode: 'vertical',
       selectedKeys: ['home'],
@@ -34,7 +34,7 @@ export const HorizontalMenu: Story = {
   name: 'Horizontal Menu',
   args: {
     id: 'menu-2',
-    type: 'Menu',
+    component: 'Menu',
     properties: {
       mode: 'horizontal',
       selectedKeys: ['dashboard'],
@@ -51,7 +51,7 @@ export const DarkMenu: Story = {
   name: 'Dark Theme Menu',
   args: {
     id: 'menu-3',
-    type: 'Menu',
+    component: 'Menu',
     properties: {
       mode: 'vertical',
       theme: 'dark',
@@ -69,7 +69,7 @@ export const WithSubmenus: Story = {
   name: 'Menu with Submenus',
   args: {
     id: 'menu-4',
-    type: 'Menu',
+    component: 'Menu',
     properties: {
       mode: 'vertical',
       items: [
