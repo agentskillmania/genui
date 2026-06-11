@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Carousel layout component — auto-playable slide show.
  */
 export const Carousel: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { autoplay, autoplaySpeed, dots, effect, style } = properties;
+  const { autoplay, autoplaySpeed, dots, effect, style } = properties ?? {};
 
   return (
     <AntCarousel

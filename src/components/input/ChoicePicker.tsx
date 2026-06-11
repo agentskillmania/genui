@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * ChoicePicker input component — single or multi-select dropdown.
  */
 export const ChoicePicker: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
-  const { value, options, placeholder, disabled, mode, size, style } = properties;
+  const { value, options, placeholder, disabled, mode, size, style } = properties ?? {};
   const [localValue, setLocalValue] = useState(value as string | string[]);
 
   const handleChange = (newValue: string | string[]) => {

@@ -5,7 +5,7 @@ import type { GenUIComponentProps } from '../types';
  * Video media component — HTML5 video player.
  */
 export const Video: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { url, width, height, autoplay, controls, loop, muted, style } = properties;
+  const { url, width, height, autoplay, controls, loop, muted, style } = properties ?? {};
 
   return (
     <video

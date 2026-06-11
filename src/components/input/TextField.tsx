@@ -16,7 +16,7 @@ export const TextField: React.FC<GenUIComponentProps> = ({ properties, onSyncSta
     variant,
     size,
     style,
-  } = properties;
+  } = properties ?? {};
 
   const [localValue, setLocalValue] = useState(value as string || '');
 

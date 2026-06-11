@@ -7,7 +7,7 @@ import type { GenUIComponentProps } from '../types';
  * Wraps in a flexShrink:0 container to prevent horizontal compression.
  */
 export const List: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { header, footer, bordered, split, size, style } = properties;
+  const { header, footer, bordered, split, size, style } = properties ?? {};
   const childArray = React.Children.toArray(children);
 
   const items = childArray.map((child, index) => ({

@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Column layout component — vertical flex child within a Row.
  */
 export const Column: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { span, offset, push, pull, order, flex, style } = properties;
+  const { span, offset, push, pull, order, flex, style } = properties ?? {};
 
   return (
     <Col

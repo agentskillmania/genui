@@ -5,7 +5,7 @@ import type { GenUIComponentProps } from '../types';
  * AudioPlayer media component — HTML5 audio element.
  */
 export const AudioPlayer: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { url, autoplay, controls, loop, muted, style } = properties;
+  const { url, autoplay, controls, loop, muted, style } = properties ?? {};
 
   return (
     <audio

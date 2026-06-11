@@ -2,7 +2,9 @@
  * Chart component — renders data visualizations via ECharts.
  *
  * Supports: bar, line, area, column, scatter, pie, donut, radar,
- * gauge, rose, funnel, heatmap, treemap, wordCloud, bar_grouped.
+ * gauge, rose, funnel, heatmap, treemap, wordCloud, bar_grouped,
+ * sankey, boxplot, candlestick, sunburst, themeRiver, graph,
+ * parallel, pictorialBar, effectScatter.
  *
  * Uses tree-shakable ECharts imports for minimal bundle size.
  */
@@ -19,6 +21,15 @@ import {
   HeatmapChart,
   TreemapChart,
   GaugeChart,
+  SankeyChart,
+  BoxplotChart,
+  CandlestickChart,
+  SunburstChart,
+  ThemeRiverChart,
+  GraphChart,
+  ParallelChart,
+  PictorialBarChart,
+  EffectScatterChart,
 } from 'echarts/charts';
 import {
   GridComponent,
@@ -26,6 +37,8 @@ import {
   LegendComponent,
   TitleComponent,
   VisualMapComponent,
+  ParallelComponent,
+  SingleAxisComponent,
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import type { GenUIComponentProps } from '../types';
@@ -41,11 +54,22 @@ echarts.use([
   HeatmapChart,
   TreemapChart,
   GaugeChart,
+  SankeyChart,
+  BoxplotChart,
+  CandlestickChart,
+  SunburstChart,
+  ThemeRiverChart,
+  GraphChart,
+  ParallelChart,
+  PictorialBarChart,
+  EffectScatterChart,
   GridComponent,
   TooltipComponent,
   LegendComponent,
   TitleComponent,
   VisualMapComponent,
+  ParallelComponent,
+  SingleAxisComponent,
   CanvasRenderer,
 ]);
 
@@ -65,7 +89,16 @@ export type ChartType =
   | 'heatmap'
   | 'treemap'
   | 'wordCloud'
-  | 'bar_grouped';
+  | 'bar_grouped'
+  | 'sankey'
+  | 'boxplot'
+  | 'candlestick'
+  | 'sunburst'
+  | 'themeRiver'
+  | 'graph'
+  | 'parallel'
+  | 'pictorialBar'
+  | 'effectScatter';
 
 /**
  * Map A2UI chart config fields to an ECharts option object.
@@ -294,6 +327,118 @@ export function buildEChartsOption(
         }],
       };
 
+    case 'sankey':
+      return {
+        ...baseOption,
+        series: [{
+          type: 'sankey',
+          layout: 'none',
+          emphasis: { focus: 'adjacency' },
+          data: (config.nodes as { name: string }[]) || [],
+          links: (config.links as { source: string; target: string; value: number }[]) || [],
+        }],
+      };
+
+    case 'boxplot':
+      return {
+        ...baseOption,
+        xAxis: { type: 'category', data: categories },
+        yAxis: { type: 'value' },
+        series: [{
+          type: 'boxplot',
+          data: yKey ? data.map((d) => d[yKey] as number[]) : [],
+        }],
+      };
+
+    case 'candlestick':
+      return {
+        ...baseOption,
+        xAxis: { type: 'category', data: categories },
+        yAxis: { type: 'value' },
+        series: [{
+          type: 'candlestick',
+          data: yKey ? data.map((d) => d[yKey] as number[]) : [],
+        }],
+      };
+
+    case 'sunburst':
+      return {
+        ...baseOption,
+        series: [{
+          type: 'sunburst',
+          data: (config.nodes as Record<string, unknown>[]) || [],
+          radius: ['15%', '80%'],
+        }],
+      };
+
+    case 'themeRiver':
+      return {
+        ...baseOption,
+        singleAxis: {
+          type: 'time',
+        },
+        series: [{
+          type: 'themeRiver',
+          data: data.map((d) => [
+            xKey ? String(d[xKey] ?? '') : '',
+            yKey ? (d[yKey] as number) : 0,
+            colorKey ? String(d[colorKey] ?? '') : '',
+          ]),
+        }],
+      };
+
+    case 'graph':
+      return {
+        ...baseOption,
+        series: [{
+          type: 'graph',
+          layout: (config.layout as string) || 'force',
+          roam: true,
+          data: (config.nodes as { name: string; value?: number }[]) || [],
+          links: (config.links as { source: string; target: string; value?: number }[]) || [],
+          emphasis: { focus: 'adjacency' },
+        }],
+      };
+
+    case 'parallel':
+      return {
+        ...baseOption,
+        parallelAxis: (config.dimensions as { dim: number; type?: string; data?: string[] }[]) || [],
+        series: [{
+          type: 'parallel',
+          data: data.map((d) =>
+            (config.dimensions as { dim: number; key: string }[])?.map((dim) => d[dim.key] as number) || []
+          ),
+        }],
+      };
+
+    case 'pictorialBar':
+      return {
+        ...baseOption,
+        xAxis: { type: 'category', data: categories },
+        yAxis: { type: 'value' },
+        series: [{
+          type: 'pictorialBar',
+          data: yKey ? data.map((d) => d[yKey] as number) : [],
+          symbolSize: (config.symbolSize as number[] | number) ?? [20, 20],
+        }],
+      };
+
+    case 'effectScatter':
+      return {
+        ...baseOption,
+        xAxis: { type: 'value' },
+        yAxis: { type: 'value' },
+        series: [{
+          type: 'effectScatter',
+          rippleEffect: { brushType: 'stroke' },
+          data: data.map((d) => [
+            xKey ? (d[xKey] as number) : 0,
+            yKey ? (d[yKey] as number) : 0,
+          ]),
+        }],
+      };
+
     default:
       return baseOption;
   }
@@ -363,7 +508,7 @@ export const Chart: React.FC<GenUIComponentProps> = ({ properties }) => {
     width = '100%',
     height = 400,
     style,
-  } = properties;
+  } = properties ?? {};
 
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);

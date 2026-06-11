@@ -5,7 +5,7 @@ import type { GenUIComponentProps } from '../types';
  * Web component — embeds an external URL in a sandboxed iframe.
  */
 export const Web: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { url, width, height, style } = properties;
+  const { url, width, height, style } = properties ?? {};
 
   return (
     <iframe

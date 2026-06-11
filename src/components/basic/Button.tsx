@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Button component — triggers onAction('click') on press.
  */
 export const Button: React.FC<GenUIComponentProps> = ({ properties, children, onAction }) => {
-  const { text, variant, danger, disabled, loading, size, style } = properties;
+  const { text, variant, danger, disabled, loading, size, style } = properties ?? {};
 
   const handleClick = () => {
     onAction?.('click');

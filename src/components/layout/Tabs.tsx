@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Tabs layout component — switchable tab panels.
  */
 export const Tabs: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { defaultActiveKey, centered, size, tabType, tabPosition, style, tabTitles } = properties;
+  const { defaultActiveKey, centered, size, tabType, tabPosition, style, tabTitles } = properties ?? {};
   const childArray = React.Children.toArray(children);
   const titles = (tabTitles as string[]) || childArray.map((_, i) => `Tab ${i + 1}`);
 

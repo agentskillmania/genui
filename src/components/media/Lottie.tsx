@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Lottie media component — renders a Lottie animation from URL or inline data.
  */
 export const Lottie: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { url, animationData, loop, autoplay, width, height, style } = properties;
+  const { url, animationData, loop, autoplay, width, height, style } = properties ?? {};
   const [fetchedData, setFetchedData] = useState<unknown>(null);
 
   useEffect(() => {

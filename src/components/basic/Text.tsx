@@ -8,7 +8,7 @@ const { Text: AntText, Title, Paragraph } = Typography;
  * Text component — renders plain or heading text via Ant Design Typography.
  */
 export const Text: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { text, variant, style, color, strong, italic, underline, delete: del } = properties;
+  const { text, variant, style, color, strong, italic, underline, delete: del } = properties ?? {};
   const content = (text as string) || '';
 
   const textStyle: React.CSSProperties = {

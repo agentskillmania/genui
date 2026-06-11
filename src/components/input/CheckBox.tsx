@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * CheckBox input component — boolean or indeterminate toggle.
  */
 export const CheckBox: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
-  const { checked, disabled, indeterminate, style } = properties;
+  const { checked, disabled, indeterminate, style } = properties ?? {};
   const [localChecked, setLocalChecked] = useState(!!checked);
 
   const handleChange = (e: { target: { checked: boolean } }) => {

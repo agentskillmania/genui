@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * RichText data component — renders raw HTML content via dangerouslySetInnerHTML.
  */
 export const RichText: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { text, style } = properties;
+  const { text, style } = properties ?? {};
 
   return (
     <Typography

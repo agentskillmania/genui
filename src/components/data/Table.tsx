@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Table data component — columnar data display with optional pagination.
  */
 export const Table: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { columns, dataSource, bordered, size, pagination, style } = properties;
+  const { columns, dataSource, bordered, size, pagination, style } = properties ?? {};
 
   return (
     <AntTable

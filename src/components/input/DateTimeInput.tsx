@@ -15,7 +15,7 @@ dayjs.extend(customParseFormat);
  * DateTimeInput component — date, time, or datetime picker.
  */
 export const DateTimeInput: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
-  const { value, placeholder, disabled, mode, format, style } = properties;
+  const { value, placeholder, disabled, mode, format, style } = properties ?? {};
   const [localValue, setLocalValue] = useState<Dayjs | null>(
     value ? dayjs(value as string) : null
   );

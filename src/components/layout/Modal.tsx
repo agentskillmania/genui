@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Modal layout component — overlay dialog with ok/cancel actions.
  */
 export const Modal: React.FC<GenUIComponentProps> = ({ properties, children, onAction }) => {
-  const { title, open, width, centered, closable, maskClosable, footer, style } = properties;
+  const { title, open, width, centered, closable, maskClosable, footer, style } = properties ?? {};
   const [visible, setVisible] = useState(!!open);
 
   useEffect(() => {

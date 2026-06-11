@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Icon component — dynamically resolves an Ant Design icon by name.
  */
 export const Icon: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { name, size, color, style } = properties;
+  const { name, size, color, style } = properties ?? {};
   const iconName = (name as string) || 'QuestionCircleOutlined';
 
   // Dynamic icon lookup from @ant-design/icons

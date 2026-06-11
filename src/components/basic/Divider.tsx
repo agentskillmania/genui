@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Divider component — horizontal or vertical separator.
  */
 export const Divider: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { orientation, type, dashed, plain, style } = properties;
+  const { orientation, type, dashed, plain, style } = properties ?? {};
 
   return (
     <AntDivider

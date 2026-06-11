@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Row layout component — horizontal flex container via Ant Design Row.
  */
 export const Row: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { justify, align, gutter, wrap, style } = properties;
+  const { justify, align, gutter, wrap, style } = properties ?? {};
 
   return (
     <AntRow

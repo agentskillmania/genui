@@ -6,7 +6,7 @@ import type { GenUIComponentProps } from '../types';
  * Card layout component — bordered content container.
  */
 export const Card: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { title, extra, bordered, hoverable, style } = properties;
+  const { title, extra, bordered, hoverable, style } = properties ?? {};
 
   return (
     <AntCard
