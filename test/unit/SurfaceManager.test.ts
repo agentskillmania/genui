@@ -11,6 +11,60 @@ import type { ParseResult } from '@/types/sdk';
  * the nested payload.
  */
 
+// ---------- helpers ----------
+
+/** Feed a single complete JSON event through a fresh stream cycle */
+function feedEvent(manager: SurfaceManager, json: string): void {
+  manager.beginTextStream();
+  manager.receiveTextChunk(json);
+  manager.endTextStream();
+}
+
+/** Feed multiple JSON events in one stream cycle */
+function feedEvents(manager: SurfaceManager, ...jsons: string[]): void {
+  manager.beginTextStream();
+  for (const json of jsons) {
+    manager.receiveTextChunk(json);
+  }
+  manager.endTextStream();
+}
+
+/** Capture events from the manager and return a typed accessor */
+function captureEvents(manager: SurfaceManager) {
+  const events: SurfaceEvent[] = [];
+  const handler = (e: SurfaceEvent) => events.push(e);
+  manager.on('event', handler);
+  return {
+    events,
+    /** Find the first event matching a type */
+    find(type: SurfaceEvent['type']): SurfaceEvent | undefined {
+      return events.find((e) => e.type === type);
+    },
+    /** Filter events by type */
+    filter(type: SurfaceEvent['type']): SurfaceEvent[] {
+      return events.filter((e) => e.type === type);
+    },
+  };
+}
+
+// Reusable JSON payloads
+const CREATE_SURFACE = (id = 's1', catalog = 'cat1') =>
+  JSON.stringify({ version: 'v0.9', createSurface: { surfaceId: id, catalogId: catalog } });
+
+const DELETE_SURFACE = (id = 's1') =>
+  JSON.stringify({ version: 'v0.9', deleteSurface: { surfaceId: id } });
+
+const UPDATE_COMPONENTS = (id = 's1', components: Record<string, unknown>[] = [{ id: 'c1', component: 'Text', text: 'hello' }]) =>
+  JSON.stringify({ version: 'v0.9', updateComponents: { surfaceId: id, components } });
+
+const UPDATE_DATA_MODEL = (id = 's1', path = '/user/name', value: unknown = 'Alice') =>
+  JSON.stringify({ version: 'v0.9', updateDataModel: { surfaceId: id, path, value } });
+
+const APPEND_DATA_MODEL = (id = 's1', path = '/log', value: string = 'entry') =>
+  JSON.stringify({ version: 'v0.9', appendDataModel: { surfaceId: id, path, value } });
+
+// ---------- Tests ----------
+
 describe('SurfaceManager', () => {
   let manager: SurfaceManager;
 
@@ -18,8 +72,10 @@ describe('SurfaceManager', () => {
     manager = new SurfaceManager();
   });
 
+  // ---- Constructor ----
+
   describe('constructor', () => {
-    it('should create instance with a numeric ID', () => {
+    it('should create instance with a numeric ID greater than zero', () => {
       expect(manager.instanceId).toBeTypeOf('number');
       expect(manager.instanceId).toBeGreaterThan(0);
     });
@@ -28,81 +84,288 @@ describe('SurfaceManager', () => {
       const other = new SurfaceManager();
       expect(other.instanceId).not.toBe(manager.instanceId);
     });
+
+    it('should expose a working engine via getEngine', () => {
+      const engine = manager.getEngine();
+      // Engine should be functional — create a surface and verify it's stored
+      engine.createSurface('test-s', 'cat', {});
+      expect(engine.getSurfaceIds()).toEqual(['test-s']);
+    });
   });
 
+  // ---- Initialize ----
+
   describe('initialize', () => {
-    it('should resolve immediately (sync-compatible)', async () => {
+    it('should resolve immediately with undefined (sync-compatible)', async () => {
       const result = manager.initialize();
       expect(result).toBeInstanceOf(Promise);
       await expect(result).resolves.toBeUndefined();
     });
   });
 
-  describe('stream input delegation', () => {
-    it('should delegate beginTextStream to parser', () => {
-      expect(() => manager.beginTextStream()).not.toThrow();
+  // ---- Stream input ----
+
+  describe('stream input — CreateSurface', () => {
+    it('should emit createSurface event when receiving a CreateSurface JSON', () => {
+      const cap = captureEvents(manager);
+      feedEvent(manager, CREATE_SURFACE('surf-1'));
+
+      const event = cap.find('createSurface');
+      expect(event).toBeDefined();
+      expect(event!.surfaceId).toBe('surf-1');
     });
 
-    it('should delegate receiveTextChunk to parser', () => {
-      manager.beginTextStream();
-      expect(() =>
-        manager.receiveTextChunk(
-          '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-        ),
-      ).not.toThrow();
+    it('should store the surface in the engine with correct catalogId', () => {
+      feedEvent(manager, CREATE_SURFACE('s1', 'my-catalog'));
+
+      const surface = manager.getEngine().getSurface('s1');
+      expect(surface).toBeDefined();
+      expect(surface!.catalogId).toBe('my-catalog');
     });
 
-    it('should delegate endTextStream to parser', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk('test');
-      expect(() => manager.endTextStream()).not.toThrow();
+    it('should store the surface with default catalogId and theme when omitted', () => {
+      feedEvent(manager, JSON.stringify({ version: 'v0.9', createSurface: { surfaceId: 's2' } }));
+
+      const surface = manager.getEngine().getSurface('s2');
+      expect(surface).toBeDefined();
+      expect(surface!.catalogId).toBe('');
+      expect(surface!.getTheme()).toEqual({});
+    });
+
+    it('should store theme configuration from the event', () => {
+      feedEvent(
+        manager,
+        JSON.stringify({
+          version: 'v0.9',
+          createSurface: {
+            surfaceId: 's3',
+            catalogId: 'cat',
+            theme: { mode: 'dark', primary: '#000' },
+          },
+        }),
+      );
+
+      const surface = manager.getEngine().getSurface('s3');
+      expect(surface!.getTheme()).toEqual({ mode: 'dark', primary: '#000' });
     });
   });
 
-  describe('interaction delegation', () => {
-    it('should delegate submitUIAction to engine', () => {
-      // Create a surface first
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
+  // ---- Stream input — UpdateComponents ----
 
-      expect(() =>
-        manager.submitUIAction({
-          surfaceId: 's1',
-          sourceComponentId: 'btn1',
-        }),
-      ).not.toThrow();
+  describe('stream input — UpdateComponents', () => {
+    it('should emit updateComponents event and store components in the engine', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+
+      const cap = captureEvents(manager);
+      feedEvent(
+        manager,
+        UPDATE_COMPONENTS('s1', [
+          { id: 'root', component: 'Column', children: ['c1', 'c2'] },
+          { id: 'c1', component: 'Text', text: 'hello' },
+          { id: 'c2', component: 'Button', label: 'OK' },
+        ]),
+      );
+
+      const event = cap.find('updateComponents');
+      expect(event).toBeDefined();
+      expect(event!.surfaceId).toBe('s1');
+
+      // Verify components are stored in the engine
+      const surface = manager.getEngine().getSurface('s1')!;
+      const roots = surface.getRootComponents();
+      expect(roots).toHaveLength(1);
+      expect(roots[0].id).toBe('root');
+      const children = surface.getChildren('root');
+      expect(children).toHaveLength(2);
+      expect(children[0].id).toBe('c1');
+      expect(children[0].text).toBe('hello');
+      expect(children[1].id).toBe('c2');
+      expect(children[1].label).toBe('OK');
     });
 
-    it('should delegate submitUIDataModel to engine', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
+    it('should handle empty components array without error', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
 
-      expect(() =>
-        manager.submitUIDataModel({
-          surfaceId: 's1',
-          componentId: 'input1',
-          change: { value: 'hello' },
-        }),
-      ).not.toThrow();
+      const cap = captureEvents(manager);
+      feedEvent(manager, UPDATE_COMPONENTS('s1', []));
+
+      // Empty components is still a valid update
+      const event = cap.find('updateComponents');
+      expect(event).toBeDefined();
+    });
+
+    it('should skip UpdateComponents when no components field is present', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+
+      const cap = captureEvents(manager);
+      feedEvent(manager, JSON.stringify({ version: 'v0.9', updateComponents: { surfaceId: 's1' } }));
+
+      // No components to update — engine should not emit
+      expect(cap.find('updateComponents')).toBeUndefined();
+    });
+
+    it('should ignore UpdateComponents for a non-existent surface', () => {
+      const cap = captureEvents(manager);
+      feedEvent(
+        manager,
+        UPDATE_COMPONENTS('no-such-surface', [{ id: 'c1', component: 'Text' }]),
+      );
+
+      // Engine no-ops for unknown surface
+      expect(cap.events).toHaveLength(0);
     });
   });
+
+  // ---- Stream input — UpdateDataModel ----
+
+  describe('stream input — UpdateDataModel', () => {
+    it('should write the value into the surface data model', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(manager, UPDATE_DATA_MODEL('s1', '/user/name', 'Alice'));
+
+      const surface = manager.getEngine().getSurface('s1')!;
+      expect(surface.resolveBinding('${/user/name}')).toBe('Alice');
+    });
+
+    it('should update nested paths correctly', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(manager, UPDATE_DATA_MODEL('s1', '/a/b/c', 'deep'));
+
+      const surface = manager.getEngine().getSurface('s1')!;
+      expect(surface.resolveBinding('${/a/b/c}')).toBe('deep');
+    });
+
+    it('should handle non-string values (numbers, objects)', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(manager, UPDATE_DATA_MODEL('s1', '/count', 42));
+
+      const surface = manager.getEngine().getSurface('s1')!;
+      expect(surface.resolveBinding('${/count}')).toBe(42);
+    });
+
+    it('should ignore UpdateDataModel for a non-existent surface', () => {
+      // No surface created — this should be a silent no-op
+      const cap = captureEvents(manager);
+      feedEvent(manager, UPDATE_DATA_MODEL('nope', '/key', 'val'));
+
+      expect(cap.events).toHaveLength(0);
+    });
+  });
+
+  // ---- Stream input — AppendDataModel ----
+
+  describe('stream input — AppendDataModel', () => {
+    it('should append string value to existing path', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(manager, UPDATE_DATA_MODEL('s1', '/log', 'line1'));
+      feedEvent(manager, APPEND_DATA_MODEL('s1', '/log', 'line2'));
+
+      const surface = manager.getEngine().getSurface('s1')!;
+      expect(surface.resolveBinding('${/log}')).toBe('line1line2');
+    });
+
+    it('should set value directly when path does not exist yet', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(manager, APPEND_DATA_MODEL('s1', '/fresh', 'initial'));
+
+      const surface = manager.getEngine().getSurface('s1')!;
+      expect(surface.resolveBinding('${/fresh}')).toBe('initial');
+    });
+
+    it('should JSON-stringify non-string values', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(
+        manager,
+        JSON.stringify({
+          version: 'v0.9',
+          appendDataModel: { surfaceId: 's1', path: '/items', value: { key: 'val' } },
+        }),
+      );
+
+      const surface = manager.getEngine().getSurface('s1')!;
+      // Non-string value gets JSON.stringify'd then appended
+      expect(surface.resolveBinding('${/items}')).toBe('{"key":"val"}');
+    });
+
+    it('should ignore AppendDataModel for a non-existent surface', () => {
+      const cap = captureEvents(manager);
+      feedEvent(manager, APPEND_DATA_MODEL('nope'));
+
+      expect(cap.events).toHaveLength(0);
+    });
+  });
+
+  // ---- Stream input — DeleteSurface ----
+
+  describe('stream input — DeleteSurface', () => {
+    it('should emit deleteSurface event and remove the surface from the engine', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+
+      const cap = captureEvents(manager);
+      feedEvent(manager, DELETE_SURFACE('s1'));
+
+      const event = cap.find('deleteSurface');
+      expect(event).toBeDefined();
+      expect(event!.surfaceId).toBe('s1');
+      expect(manager.getEngine().getSurface('s1')).toBeUndefined();
+    });
+
+    it('should not emit when deleting a non-existent surface', () => {
+      const cap = captureEvents(manager);
+      feedEvent(manager, DELETE_SURFACE('nope'));
+
+      expect(cap.events).toHaveLength(0);
+    });
+  });
+
+  // ---- Unknown events ----
+
+  describe('stream input — unknown events', () => {
+    it('should ignore unknown event types without crashing', () => {
+      const cap = captureEvents(manager);
+      feedEvent(manager, JSON.stringify({ version: 'v0.9', someRandomKey: { surfaceId: 's1' } }));
+
+      expect(cap.events).toHaveLength(0);
+      expect(manager.getEngine().getSurfaceIds()).toEqual([]);
+    });
+  });
+
+  // ---- Malformed input ----
+
+  describe('stream input — malformed input', () => {
+    it('should ignore malformed JSON in stream without emitting events', () => {
+      const cap = captureEvents(manager);
+
+      manager.beginTextStream();
+      manager.receiveTextChunk('{"broken json');
+      manager.endTextStream();
+
+      expect(cap.events).toHaveLength(0);
+    });
+
+    it('should handle a mixture of valid and invalid data gracefully', () => {
+      const cap = captureEvents(manager);
+
+      manager.beginTextStream();
+      manager.receiveTextChunk(CREATE_SURFACE('s1'));
+      manager.receiveTextChunk('not-json');
+      manager.receiveTextChunk(UPDATE_COMPONENTS('s1'));
+      manager.endTextStream();
+
+      // Valid events should still be processed
+      expect(cap.find('createSurface')).toBeDefined();
+      expect(cap.find('updateComponents')).toBeDefined();
+    });
+  });
+
+  // ---- Event subscription ----
 
   describe('event subscription', () => {
     it('should subscribe and receive events via on()', () => {
       const handler = vi.fn();
       manager.on('event', handler);
 
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
+      feedEvent(manager, CREATE_SURFACE('s1'));
 
       expect(handler).toHaveBeenCalledTimes(1);
       const event = handler.mock.calls[0][0] as SurfaceEvent;
@@ -115,11 +378,7 @@ describe('SurfaceManager', () => {
       manager.on('event', handler);
       manager.off('event', handler);
 
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
+      feedEvent(manager, CREATE_SURFACE('s1'));
 
       expect(handler).not.toHaveBeenCalled();
     });
@@ -130,354 +389,13 @@ describe('SurfaceManager', () => {
       manager.on('event', handler1);
       manager.on('event', handler2);
 
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
+      feedEvent(manager, CREATE_SURFACE('s1'));
 
       expect(handler1).toHaveBeenCalledTimes(1);
       expect(handler2).toHaveBeenCalledTimes(1);
     });
-  });
 
-  describe('getEngine', () => {
-    it('should return the engine instance', () => {
-      const engine = manager.getEngine();
-      expect(engine).toBeDefined();
-      expect(typeof engine.addListener).toBe('function');
-      expect(typeof engine.createSurface).toBe('function');
-    });
-  });
-
-  describe('sizing pass-through', () => {
-    it('should pass through setSurfaceSizeProvider', () => {
-      const provider = (_id: string) => ({ width: 100, height: 200 });
-      expect(() => manager.setSurfaceSizeProvider(provider)).not.toThrow();
-    });
-
-    it('should pass through onSurfaceSizeChanged', () => {
-      expect(() => manager.onSurfaceSizeChanged('s1', 800, 600)).not.toThrow();
-    });
-
-    it('should pass through getSurfaceSize', () => {
-      const provider = () => ({ width: 1024, height: 768 });
-      manager.setSurfaceSizeProvider(provider);
-      expect(manager.getSurfaceSize('s1')).toEqual({ width: 1024, height: 768 });
-    });
-
-    it('should return undefined when no provider is set', () => {
-      manager.setSurfaceSizeProvider(undefined);
-      expect(manager.getSurfaceSize('s1')).toBeUndefined();
-    });
-
-    it('should use cached size from onSurfaceSizeChanged', () => {
-      manager.onSurfaceSizeChanged('s1', 800, 600);
-      expect(manager.getSurfaceSize('s1')).toEqual({ width: 800, height: 600 });
-    });
-  });
-
-  describe('destroy', () => {
-    it('should prevent further operations after destroy', () => {
-      manager.destroy();
-      expect(() => manager.beginTextStream()).toThrow();
-      expect(() => manager.receiveTextChunk('x')).toThrow();
-      expect(() => manager.endTextStream()).toThrow();
-    });
-
-    it('should stop forwarding events after destroy', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-      manager.destroy();
-
-      // Operations throw, so events cannot be triggered
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should throw after destroy for submitUIAction', () => {
-      manager.destroy();
-      expect(() =>
-        manager.submitUIAction({ surfaceId: 's1', sourceComponentId: 'b' }),
-      ).toThrow();
-    });
-
-    it('should throw after destroy for submitUIDataModel', () => {
-      manager.destroy();
-      expect(() =>
-        manager.submitUIDataModel({
-          surfaceId: 's1',
-          componentId: 'c',
-          change: {},
-        }),
-      ).toThrow();
-    });
-  });
-
-  describe('parse result processing — CreateSurface', () => {
-    it('should create a surface from a CreateSurface event', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"surf-1","catalogId":"catalog-a","theme":{"mode":"light"}}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('createSurface');
-      expect(event.surfaceId).toBe('surf-1');
-    });
-
-    it('should create a surface with default catalogId and theme', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s2"}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('createSurface');
-      expect(event.surfaceId).toBe('s2');
-    });
-  });
-
-  describe('parse result processing — UpdateComponents', () => {
-    it('should update components from an UpdateComponents event', () => {
-      // First create a surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      // Update components
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"updateComponents":{"surfaceId":"s1","components":[{"id":"c1","type":"Text"}]}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('updateComponents');
-      expect(event.surfaceId).toBe('s1');
-    });
-
-    it('should handle UpdateComponents with empty components array gracefully', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      // Empty components array — components is truthy but empty
-      manager.beginTextStream();
-      expect(() =>
-        manager.receiveTextChunk(
-          '{"updateComponents":{"surfaceId":"s1","components":[]}}',
-        ),
-      ).not.toThrow();
-      manager.endTextStream();
-    });
-  });
-
-  describe('parse result processing — UpdateDataModel', () => {
-    it('should update data model from an UpdateDataModel event', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"updateDataModel":{"surfaceId":"s1","path":"user.name","value":"Alice"}}',
-      );
-      manager.endTextStream();
-
-      // UpdateDataModel does not emit an event in the current engine
-      // (it updates internal state silently), so we just verify no crash
-      expect(manager.getEngine().getSurface('s1')).toBeDefined();
-    });
-  });
-
-  describe('parse result processing — AppendDataModel', () => {
-    it('should append data model from an AppendDataModel event', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      manager.beginTextStream();
-      expect(() =>
-        manager.receiveTextChunk(
-          '{"appendDataModel":{"surfaceId":"s1","path":"items","value":"item1"}}',
-        ),
-      ).not.toThrow();
-      manager.endTextStream();
-
-      expect(manager.getEngine().getSurface('s1')).toBeDefined();
-    });
-
-    it('should append non-string value (JSON stringify fallback)', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      manager.beginTextStream();
-      expect(() =>
-        manager.receiveTextChunk(
-          '{"appendDataModel":{"surfaceId":"s1","path":"items","value":{"key":"val"}}}',
-        ),
-      ).not.toThrow();
-      manager.endTextStream();
-    });
-  });
-
-  describe('parse result processing — DeleteSurface', () => {
-    it('should delete a surface from a DeleteSurface event', () => {
-      // Create first
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      // Delete
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"deleteSurface":{"surfaceId":"s1"}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('deleteSurface');
-      expect(event.surfaceId).toBe('s1');
-    });
-  });
-
-  describe('parse result processing — Unknown event', () => {
-    it('should ignore unknown event types gracefully', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      manager.receiveTextChunk('{"someRandomKey":{"surfaceId":"s1"}}');
-      manager.endTextStream();
-
-      // No surface created, no crash
-      expect(handler).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('parse result processing — direct fields (non-nested payload)', () => {
-    it('should handle CreateSurface with direct surfaceId field', () => {
-      // When the JSON has surfaceId at top level (non-nested format)
-      // The parser puts the whole JSON in eventJson, but also extracts
-      // surfaceId from the inner payload. When we re-parse eventJson,
-      // we get { createSurface: { surfaceId: 's1' } }.
-      // Test that this path works correctly.
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"direct-test","catalogId":"cat","theme":{"dark":true}}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      expect(handler.mock.calls[0][0]).toMatchObject({
-        type: 'createSurface',
-        surfaceId: 'direct-test',
-      });
-    });
-  });
-
-  describe('parse result processing — UpdateComponents via surfaceId fallback', () => {
-    it('should use surfaceId from result when not in outer data', () => {
-      // The parser sets surfaceId on the ParseResult from the inner payload,
-      // so when processUpdateComponents gets data, it will find
-      // data.updateComponents.surfaceId via the nested path.
-      // This test verifies the normal path.
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"updateComponents":{"surfaceId":"s1","components":[{"id":"c1","type":"Text"}]}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.surfaceId).toBe('s1');
-    });
-  });
-
-  describe('parse result processing — UpdateComponents without components', () => {
-    it('should skip UpdateComponents when no components field', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      // JSON that classifies as UpdateComponents but missing components
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"updateComponents":{"surfaceId":"s1"}}',
-      );
-      manager.endTextStream();
-
-      // No updateComponents event should fire (no components to update)
-      expect(handler).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('error handling', () => {
-    it('should ignore malformed JSON in stream without crashing', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      // Incomplete JSON — the parser will not emit results
-      manager.receiveTextChunk('{"broken json');
-      manager.endTextStream();
-
-      // No events should have been emitted
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should not throw when listener throws', () => {
+    it('should not break when a listener throws — other listeners still receive events', () => {
       const badListener = () => {
         throw new Error('Listener error');
       };
@@ -485,613 +403,280 @@ describe('SurfaceManager', () => {
       manager.on('event', badListener);
       manager.on('event', goodListener);
 
-      // Should not throw despite bad listener
       expect(() => {
-        manager.beginTextStream();
-        manager.receiveTextChunk(
-          '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-        );
-        manager.endTextStream();
+        feedEvent(manager, CREATE_SURFACE('s1'));
       }).not.toThrow();
 
-      // Good listener should still be called (error in first listener is swallowed)
       expect(goodListener).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe('multiple streams in sequence', () => {
-    it('should handle multiple begin/receive/end cycles', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
+  // ---- Interaction delegation ----
 
-      // First stream
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
+  describe('submitUIAction', () => {
+    it('should emit action event with correct surfaceId and componentId', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
 
-      // Second stream
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s2","catalogId":"cat2"}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(2);
-    });
-
-    it('should handle multiple events in one chunk', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.beginTextStream();
-      // Two JSON objects in one chunk
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}{"createSurface":{"surfaceId":"s2","catalogId":"cat2"}}',
-      );
-      manager.endTextStream();
-
-      expect(handler).toHaveBeenCalledTimes(2);
-    });
-  });
-
-  describe('submitUIAction event emission', () => {
-    it('should emit action event when submitting UI action', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
+      const cap = captureEvents(manager);
       manager.submitUIAction({
         surfaceId: 's1',
         sourceComponentId: 'btn1',
         context: { key: 'value' },
       });
 
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('action');
-      expect(event.surfaceId).toBe('s1');
+      const event = cap.find('action');
+      expect(event).toBeDefined();
+      expect(event!.surfaceId).toBe('s1');
+      expect(event!.payload).toEqual({
+        surfaceId: 's1',
+        sourceComponentId: 'btn1',
+        context: { key: 'value' },
+      });
     });
   });
 
-  describe('submitUIDataModel event emission', () => {
-    it('should emit syncUIToData event when submitting data model sync', () => {
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
+  describe('submitUIDataModel', () => {
+    it('should emit syncUIToData event with correct payload', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
 
-      const handler = vi.fn();
-      manager.on('event', handler);
-
+      const cap = captureEvents(manager);
       manager.submitUIDataModel({
         surfaceId: 's1',
         componentId: 'input1',
         change: { value: 'new value' },
       });
 
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('syncUIToData');
-      expect(event.surfaceId).toBe('s1');
-    });
-  });
-
-  describe('onSurfaceSizeChanged event emission', () => {
-    it('should emit surfaceSizeChanged event', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      manager.onSurfaceSizeChanged('s1', 1024, 768);
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('surfaceSizeChanged');
-      expect(event.surfaceId).toBe('s1');
-    });
-  });
-
-  // -----------------------------------------------------------------------
-  // Direct internal method tests for branch coverage.
-  // The parser only emits NormalEvent results, so ComponentUpdate paths
-  // must be tested by calling processParseResults directly.
-  // -----------------------------------------------------------------------
-
-  describe('internal processParseResults — ComponentUpdate paths', () => {
-    // Access the private method via type assertion
-    type ManagerWithInternals = SurfaceManager & {
-      processParseResults: (results: ParseResult[]) => void;
-    };
-    const getInternals = (m: SurfaceManager): ManagerWithInternals =>
-      m as unknown as ManagerWithInternals;
-
-    it('should handle ComponentUpdate with updateComponents wrapper', () => {
-      // First create a surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      // Directly inject a ComponentUpdate with wrapped updateComponents
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'ComponentUpdate',
-          eventType: 'UpdateComponents',
-          surfaceId: 's1',
-          componentJson: JSON.stringify({
-            updateComponents: {
-              surfaceId: 's1',
-              components: [{ id: 'c1', type: 'Text' }],
-            },
-          }),
-        },
-      ]);
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('updateComponents');
-      expect(event.surfaceId).toBe('s1');
-    });
-
-    it('should handle ComponentUpdate with single component (no wrapper)', () => {
-      // First create a surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      // Directly inject a ComponentUpdate with a single component
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'ComponentUpdate',
-          eventType: 'UpdateComponents',
-          surfaceId: 's1',
-          componentJson: JSON.stringify({ id: 'c2', type: 'Button', label: 'OK' }),
-        },
-      ]);
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('updateComponents');
-      expect(event.surfaceId).toBe('s1');
-    });
-
-    it('should skip ComponentUpdate with null componentJson', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'ComponentUpdate',
-          eventType: 'UpdateComponents',
-          surfaceId: 's1',
-          componentJson: undefined,
-        },
-      ]);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should skip ComponentUpdate with malformed componentJson', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'ComponentUpdate',
-          eventType: 'UpdateComponents',
-          surfaceId: 's1',
-          componentJson: 'not valid json{{{',
-        },
-      ]);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should skip ComponentUpdate wrapper with no components', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'ComponentUpdate',
-          eventType: 'UpdateComponents',
-          surfaceId: 's1',
-          componentJson: JSON.stringify({
-            updateComponents: { surfaceId: 's1' },
-          }),
-        },
-      ]);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should handle ComponentUpdate wrapper using fallback surfaceId', () => {
-      // First create a surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      // Wrapper missing surfaceId — should fall back to result.surfaceId
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'ComponentUpdate',
-          eventType: 'UpdateComponents',
-          surfaceId: 's1',
-          componentJson: JSON.stringify({
-            updateComponents: {
-              components: [{ id: 'c1', type: 'Text' }],
-            },
-          }),
-        },
-      ]);
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.surfaceId).toBe('s1');
-    });
-
-    it('should handle ComponentUpdate with no surfaceId (empty fallback)', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'ComponentUpdate',
-          eventType: 'UpdateComponents',
-          surfaceId: undefined,
-          componentJson: JSON.stringify({ id: 'c1', type: 'Text' }),
-        },
-      ]);
-
-      // Engine will no-op since no surface exists with empty id
-      expect(handler).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('internal processParseResults — NormalEvent edge cases', () => {
-    type ManagerWithInternals = SurfaceManager & {
-      processParseResults: (results: ParseResult[]) => void;
-    };
-    const getInternals = (m: SurfaceManager): ManagerWithInternals =>
-      m as unknown as ManagerWithInternals;
-
-    it('should handle NormalEvent with null eventJson', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'CreateSurface',
-          eventJson: undefined,
-        },
-      ]);
-
-      // Should not crash, should not create surface
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should handle NormalEvent with malformed eventJson', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'CreateSurface',
-          eventJson: 'invalid json{{{',
-        },
-      ]);
-
-      // Should not crash
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should handle CreateSurface with no surfaceId (skip)', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'CreateSurface',
-          eventJson: JSON.stringify({ createSurface: {} }),
-        },
-      ]);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should handle UpdateDataModel with surfaceId from result fallback', () => {
-      // Create surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const internals = getInternals(manager);
-
-      // Inject UpdateDataModel where the data has the event key
-      // (simulating the actual parser output format)
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'UpdateDataModel',
-          eventJson: JSON.stringify({
-            updateDataModel: { surfaceId: 's1', path: 'x', value: 42 },
-          }),
-          surfaceId: 's1',
-        },
-      ]);
-
-      // Should update without error
-      expect(manager.getEngine().getSurface('s1')).toBeDefined();
-    });
-
-    it('should handle AppendDataModel with surfaceId from result fallback', () => {
-      // Create surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const internals = getInternals(manager);
-
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'AppendDataModel',
-          eventJson: JSON.stringify({
-            appendDataModel: { surfaceId: 's1', path: 'log', value: 'line1' },
-          }),
-          surfaceId: 's1',
-        },
-      ]);
-
-      expect(manager.getEngine().getSurface('s1')).toBeDefined();
-    });
-
-    it('should handle UpdateDataModel with direct surfaceId field', () => {
-      // Create surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const internals = getInternals(manager);
-
-      // data.surfaceId is present directly
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'UpdateDataModel',
-          eventJson: JSON.stringify({ surfaceId: 's1', path: 'key', value: 'val' }),
-        },
-      ]);
-
-      expect(manager.getEngine().getSurface('s1')).toBeDefined();
-    });
-
-    it('should handle AppendDataModel with direct surfaceId field', () => {
-      // Create surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const internals = getInternals(manager);
-
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'AppendDataModel',
-          eventJson: JSON.stringify({ surfaceId: 's1', path: 'log', value: 'entry' }),
-        },
-      ]);
-
-      expect(manager.getEngine().getSurface('s1')).toBeDefined();
-    });
-
-    it('should handle DeleteSurface with surfaceId from result fallback', () => {
-      // Create surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'DeleteSurface',
-          eventJson: JSON.stringify({ deleteSurface: { surfaceId: 's1' } }),
-          surfaceId: 's1',
-        },
-      ]);
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('deleteSurface');
-      expect(event.surfaceId).toBe('s1');
-    });
-
-    it('should handle DeleteSurface with direct surfaceId field', () => {
-      // Create surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
-      manager.endTextStream();
-
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'DeleteSurface',
-          eventJson: JSON.stringify({ surfaceId: 's1' }),
-        },
-      ]);
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      expect(handler.mock.calls[0][0]).toMatchObject({
-        type: 'deleteSurface',
+      const event = cap.find('syncUIToData');
+      expect(event).toBeDefined();
+      expect(event!.surfaceId).toBe('s1');
+      expect(event!.payload).toEqual({
         surfaceId: 's1',
+        componentId: 'input1',
+        change: { value: 'new value' },
       });
     });
+  });
 
-    it('should handle UpdateComponents with direct surfaceId field', () => {
-      // Create surface
+  // ---- Sizing pass-through ----
+
+  describe('sizing pass-through', () => {
+    it('should cache size from onSurfaceSizeChanged and return it from getSurfaceSize', () => {
+      manager.onSurfaceSizeChanged('s1', 800, 600);
+      expect(manager.getSurfaceSize('s1')).toEqual({ width: 800, height: 600 });
+    });
+
+    it('should use provider when no cached size exists', () => {
+      manager.setSurfaceSizeProvider(() => ({ width: 1024, height: 768 }));
+      expect(manager.getSurfaceSize('s1')).toEqual({ width: 1024, height: 768 });
+    });
+
+    it('should prefer cached size over provider', () => {
+      manager.setSurfaceSizeProvider(() => ({ width: 100, height: 200 }));
+      manager.onSurfaceSizeChanged('s1', 800, 600);
+      expect(manager.getSurfaceSize('s1')).toEqual({ width: 800, height: 600 });
+    });
+
+    it('should return undefined when no provider or cache', () => {
+      manager.setSurfaceSizeProvider(undefined);
+      expect(manager.getSurfaceSize('s1')).toBeUndefined();
+    });
+
+    it('should emit surfaceSizeChanged event when size changes', () => {
+      const cap = captureEvents(manager);
+      manager.onSurfaceSizeChanged('s1', 1024, 768);
+
+      const event = cap.find('surfaceSizeChanged');
+      expect(event).toBeDefined();
+      expect(event!.surfaceId).toBe('s1');
+      expect(event!.payload).toEqual({ width: 1024, height: 768 });
+    });
+  });
+
+  // ---- Destroy ----
+
+  describe('destroy', () => {
+    it('should prevent stream operations after destroy', () => {
+      manager.destroy();
+      expect(() => manager.beginTextStream()).toThrow('SurfaceManager has been disposed');
+      expect(() => manager.receiveTextChunk('x')).toThrow('SurfaceManager has been disposed');
+      expect(() => manager.endTextStream()).toThrow('SurfaceManager has been disposed');
+    });
+
+    it('should prevent interaction operations after destroy', () => {
+      manager.destroy();
+      expect(() =>
+        manager.submitUIAction({ surfaceId: 's1', sourceComponentId: 'b' }),
+      ).toThrow('SurfaceManager has been disposed');
+      expect(() =>
+        manager.submitUIDataModel({ surfaceId: 's1', componentId: 'c', change: {} }),
+      ).toThrow('SurfaceManager has been disposed');
+    });
+  });
+
+  // ---- Multiple streams / multiple events ----
+
+  describe('multiple streams in sequence', () => {
+    it('should handle multiple begin/receive/end cycles', () => {
+      const cap = captureEvents(manager);
+
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(manager, CREATE_SURFACE('s2'));
+
+      expect(cap.filter('createSurface')).toHaveLength(2);
+      expect(cap.events[0].surfaceId).toBe('s1');
+      expect(cap.events[1].surfaceId).toBe('s2');
+    });
+
+    it('should handle multiple events in one chunk', () => {
+      const cap = captureEvents(manager);
+
       manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
-      );
+      manager.receiveTextChunk(CREATE_SURFACE('s1') + CREATE_SURFACE('s2'));
       manager.endTextStream();
 
-      const handler = vi.fn();
-      manager.on('event', handler);
+      expect(cap.filter('createSurface')).toHaveLength(2);
+    });
+  });
 
-      const internals = getInternals(manager);
+  // ---- ComponentUpdate via streaming plugins ----
+  // These tests exercise the ComponentUpdate path through the public API
+  // by sending partial Markdown/Text JSON that triggers streaming detection.
 
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'UpdateComponents',
-          eventJson: JSON.stringify({
+  describe('ComponentUpdate via streaming detection', () => {
+    it('should process streaming Markdown content as ComponentUpdate', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+
+      const cap = captureEvents(manager);
+
+      // Send partial Markdown — triggers streaming ComponentUpdate
+      manager.beginTextStream();
+      manager.receiveTextChunk(
+        '{"version":"v0.9","updateComponents":{"surfaceId":"s1","components":[{"id":"c1","component":"Markdown","content":"# Hel',
+      );
+
+      // Should have received at least one ComponentUpdate
+      const streamingEvent = cap.find('updateComponents');
+      expect(streamingEvent).toBeDefined();
+      expect(streamingEvent!.surfaceId).toBe('s1');
+
+      // Complete the JSON
+      manager.receiveTextChunk('lo"}]}}');
+      manager.endTextStream();
+
+      // Should have another updateComponents event from the complete JSON
+      expect(cap.filter('updateComponents').length).toBeGreaterThanOrEqual(2);
+    });
+
+    it('should process streaming Text content as ComponentUpdate', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+
+      const cap = captureEvents(manager);
+
+      manager.beginTextStream();
+      manager.receiveTextChunk(
+        '{"version":"v0.9","updateComponents":{"surfaceId":"s1","components":[{"id":"c1","component":"Text","text":"Loading...',
+      );
+
+      const streamingEvent = cap.find('updateComponents');
+      expect(streamingEvent).toBeDefined();
+      expect(streamingEvent!.surfaceId).toBe('s1');
+
+      manager.endTextStream();
+    });
+  });
+
+  // ---- Direct surfaceId resolution paths ----
+  // These test the different ways SurfaceManager resolves surfaceId from JSON.
+  // All use the public stream API — no private method access.
+
+  describe('surfaceId resolution — nested vs direct format', () => {
+    it('should handle CreateSurface with nested payload format', () => {
+      feedEvent(
+        manager,
+        JSON.stringify({
+          version: 'v0.9',
+          createSurface: { surfaceId: 'nested-s', catalogId: 'cat', theme: { dark: true } },
+        }),
+      );
+
+      const surface = manager.getEngine().getSurface('nested-s');
+      expect(surface).toBeDefined();
+      expect(surface!.catalogId).toBe('cat');
+      expect(surface!.getTheme()).toEqual({ dark: true });
+    });
+
+    it('should handle UpdateDataModel with nested payload (event-key format)', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+
+      // The actual wire format: { updateDataModel: { surfaceId, path, value } }
+      feedEvent(
+        manager,
+        JSON.stringify({ version: 'v0.9', updateDataModel: { surfaceId: 's1', path: '/x', value: 42 } }),
+      );
+
+      expect(manager.getEngine().getSurface('s1')!.resolveBinding('${/x}')).toBe(42);
+    });
+
+    it('should handle AppendDataModel with nested payload format', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+      feedEvent(
+        manager,
+        JSON.stringify({ version: 'v0.9', appendDataModel: { surfaceId: 's1', path: '/log', value: 'line1' } }),
+      );
+
+      expect(manager.getEngine().getSurface('s1')!.resolveBinding('${/log}')).toBe('line1');
+    });
+
+    it('should handle UpdateComponents with nested payload format', () => {
+      feedEvent(manager, CREATE_SURFACE('s1'));
+
+      feedEvent(
+        manager,
+        JSON.stringify({
+          version: 'v0.9',
+          updateComponents: {
             surfaceId: 's1',
-            components: [{ id: 'c1', type: 'Text' }],
-          }),
-        },
-      ]);
-
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.type).toBe('updateComponents');
-      expect(event.surfaceId).toBe('s1');
-    });
-
-    it('should skip UpdateDataModel with empty surfaceId', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'UpdateDataModel',
-          eventJson: JSON.stringify({ path: 'x', value: 'y' }),
-        },
-      ]);
-
-      // No surfaceId anywhere — should skip
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should skip DeleteSurface with no surfaceId', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'DeleteSurface',
-          eventJson: JSON.stringify({}),
-        },
-      ]);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should skip UpdateComponents with no surfaceId and no components', () => {
-      const handler = vi.fn();
-      manager.on('event', handler);
-
-      const internals = getInternals(manager);
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'UpdateComponents',
-          eventJson: JSON.stringify({}),
-        },
-      ]);
-
-      expect(handler).not.toHaveBeenCalled();
-    });
-
-    it('should handle UpdateComponents using result.surfaceId fallback', () => {
-      // Create surface
-      manager.beginTextStream();
-      manager.receiveTextChunk(
-        '{"createSurface":{"surfaceId":"s1","catalogId":"cat1"}}',
+            components: [
+              { id: 'root', component: 'Column', children: ['c1'] },
+              { id: 'c1', component: 'Text', text: 'via-nested' },
+            ],
+          },
+        }),
       );
-      manager.endTextStream();
 
-      const handler = vi.fn();
-      manager.on('event', handler);
+      const surface = manager.getEngine().getSurface('s1')!;
+      expect(surface.getRootComponents()).toHaveLength(1);
+      expect(surface.getRootComponents()[0].id).toBe('root');
+      const children = surface.getChildren('root');
+      expect(children).toHaveLength(1);
+      expect(children[0].text).toBe('via-nested');
+    });
 
-      const internals = getInternals(manager);
+    it('should skip CreateSurface when no surfaceId is present', () => {
+      feedEvent(manager, JSON.stringify({ version: 'v0.9', createSurface: {} }));
 
-      // eventJson has nested format but surfaceId comes from result
-      internals.processParseResults([
-        {
-          type: 'NormalEvent',
-          eventType: 'UpdateComponents',
-          eventJson: JSON.stringify({
-            updateComponents: {
-              components: [{ id: 'c1', type: 'Text' }],
-            },
-          }),
-          surfaceId: 's1',
-        },
-      ]);
+      expect(manager.getEngine().getSurfaceIds()).toEqual([]);
+    });
 
-      expect(handler).toHaveBeenCalledTimes(1);
-      const event = handler.mock.calls[0][0] as SurfaceEvent;
-      expect(event.surfaceId).toBe('s1');
+    it('should skip UpdateDataModel when no surfaceId is present anywhere', () => {
+      const cap = captureEvents(manager);
+      feedEvent(manager, JSON.stringify({ version: 'v0.9', updateDataModel: { path: '/x', value: 'y' } }));
+
+      expect(cap.events).toHaveLength(0);
+    });
+
+    it('should skip UpdateComponents when no surfaceId and no components', () => {
+      const cap = captureEvents(manager);
+      feedEvent(manager, JSON.stringify({ version: 'v0.9', updateComponents: {} }));
+
+      expect(cap.events).toHaveLength(0);
+    });
+
+    it('should skip DeleteSurface when no surfaceId is present', () => {
+      const cap = captureEvents(manager);
+      feedEvent(manager, JSON.stringify({ version: 'v0.9', deleteSurface: {} }));
+
+      expect(cap.events).toHaveLength(0);
     });
   });
 });
