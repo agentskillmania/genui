@@ -137,12 +137,18 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
       const surface = engine.getSurface(surfaceId);
       const childComponents = surface?.getChildren(id) || [];
 
+      // Resolve ${...} data bindings in component properties before rendering
+      const resolvedProps = engine.resolveProperties(
+        surfaceId,
+        properties,
+      ) as Record<string, unknown>;
+
       return (
         <React.Fragment key={id}>
           {React.createElement(renderer, {
             id,
             component,
-            properties: properties as Record<string, unknown>,
+            properties: resolvedProps,
             children: childComponents.map((childComp) => renderComponent(surfaceId, childComp)),
             onAction: (_action, context) => handleComponentAction(surfaceId, id, _action, context),
           })}

@@ -218,6 +218,30 @@ export class SurfaceState {
     return getByPath(this.dataModel, segments);
   }
 
+  /**
+   * Recursively resolve all `${...}` binding expressions in a value.
+   *
+   * - Strings matching `${/path}` are resolved via the data model.
+   * - Plain objects and arrays are walked recursively.
+   * - All other types (number, boolean, null) are returned as-is.
+   */
+  resolveProperties(value: unknown): unknown {
+    if (typeof value === 'string') {
+      return this.resolveBinding(value);
+    }
+    if (Array.isArray(value)) {
+      return value.map((item) => this.resolveProperties(item));
+    }
+    if (value !== null && typeof value === 'object') {
+      const resolved: Record<string, unknown> = {};
+      for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+        resolved[key] = this.resolveProperties(val);
+      }
+      return resolved;
+    }
+    return value;
+  }
+
   // ---- Theme ----
 
   /** Returns a shallow copy of the theme configuration. */
@@ -301,6 +325,19 @@ export class SurfaceEngine {
     if (!surface) return;
     surface.updateComponent(componentJson);
     this.emit({ type: 'updateComponents', surfaceId });
+  }
+
+  // ---- Data binding resolution ----
+
+  /**
+   * Recursively resolve all `${...}` binding expressions in a value
+   * using the data model of the specified surface.
+   * Returns the value unchanged if the surface does not exist.
+   */
+  resolveProperties(surfaceId: string, value: unknown): unknown {
+    const surface = this.surfaces.get(surfaceId);
+    if (!surface) return value;
+    return surface.resolveProperties(value);
   }
 
   // ---- Data model passthrough ----

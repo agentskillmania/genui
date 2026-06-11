@@ -29,6 +29,7 @@ const mockSurfaceState = {
 const mockEngine = {
   getSurfaceIds: vi.fn<() => string[]>(() => []),
   getSurface: vi.fn<(id: string) => typeof mockSurfaceState | undefined>(() => mockSurfaceState),
+  resolveProperties: vi.fn<(surfaceId: string, value: unknown) => unknown>((_sid, value) => value),
   addListener: vi.fn<(listener: (event: SurfaceEvent) => void) => () => void>((listener) => {
     engineListeners.push(listener);
     return () => {

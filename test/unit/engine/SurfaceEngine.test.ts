@@ -417,3 +417,97 @@ describe('SurfaceEngine – edge cases', () => {
     });
   });
 });
+
+// ---------- resolveProperties ----------
+
+describe('SurfaceEngine – resolveProperties', () => {
+  it('resolves a simple string binding', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/user', { name: 'Alice' });
+    expect(engine.resolveProperties('s1', '${/user/name}')).toBe('Alice');
+  });
+
+  it('returns plain string unchanged', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    expect(engine.resolveProperties('s1', 'Hello')).toBe('Hello');
+  });
+
+  it('returns number unchanged', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    expect(engine.resolveProperties('s1', 42)).toBe(42);
+  });
+
+  it('returns null unchanged', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    expect(engine.resolveProperties('s1', null)).toBeNull();
+  });
+
+  it('returns boolean unchanged', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    expect(engine.resolveProperties('s1', true)).toBe(true);
+  });
+
+  it('resolves bindings inside a flat object', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/profile', { name: 'Bob', role: 'Dev' });
+    const result = engine.resolveProperties('s1', {
+      text: '${/profile/name}',
+      subtitle: '${/profile/role}',
+      count: 10,
+    });
+    expect(result).toEqual({ text: 'Bob', subtitle: 'Dev', count: 10 });
+  });
+
+  it('resolves bindings inside nested objects', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/data', { userId: 'u1' });
+    const result = engine.resolveProperties('s1', {
+      action: {
+        event: {
+          name: 'click',
+          context: { userId: '${/data/userId}' },
+        },
+      },
+    });
+    expect(result).toEqual({
+      action: { event: { name: 'click', context: { userId: 'u1' } } },
+    });
+  });
+
+  it('resolves bindings inside arrays', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/tags', ['React', 'Vue']);
+    const result = engine.resolveProperties('s1', {
+      items: ['${/tags/0}', '${/tags/1}', 'Svelte'],
+    });
+    expect(result).toEqual({ items: ['React', 'Vue', 'Svelte'] });
+  });
+
+  it('returns undefined for unresolved bindings', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    // Data model is empty — binding resolves to undefined
+    expect(engine.resolveProperties('s1', '${/missing}')).toBeUndefined();
+  });
+
+  it('returns value unchanged for unknown surface', () => {
+    const engine = new SurfaceEngine();
+    const input = { text: '${/foo}' };
+    expect(engine.resolveProperties('nonexistent', input)).toBe(input);
+  });
+
+  it('resolves legacy dot-notation bindings', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/', { user: { name: 'Carol' } });
+    expect(engine.resolveProperties('s1', '${user.name}')).toBe('Carol');
+  });
+});
