@@ -1,0 +1,18 @@
+{
+  "version": "v0.9",
+  "updateDataModel": {
+    "surfaceId": "order_summary",
+    "path": "/order",
+    "value": {
+      "orderId": "ORD-20260612-0042",
+      "title": "Order #ORD-20260612-0042",
+      "items": [
+        { "name": "Mechanical Keyboard", "qty": "×1", "price": "$159.00" },
+        { "name": "USB-C Hub", "qty": "×2", "price": "$79.90" }
+      ],
+      "total": "$238.90",
+      "status": "Processing",
+      "date": "Placed Jun 12, 2026"
+    }
+  }
+}

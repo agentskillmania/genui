@@ -1,0 +1,143 @@
+{
+  "version": "v0.9",
+  "updateComponents": {
+    "surfaceId": "user_profile",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "children": ["main_row"],
+        "bordered": true,
+        "style": { "maxWidth": 480, "boxShadow": "0 2px 8px rgba(0, 0, 0, 0.09)" }
+      },
+      {
+        "id": "main_row",
+        "component": "Row",
+        "children": ["left_col", "right_col"],
+        "gutter": 24,
+        "align": "middle"
+      },
+      {
+        "id": "left_col",
+        "component": "Column",
+        "children": ["avatar"],
+        "span": 6,
+        "style": { "display": "flex", "justifyContent": "center" }
+      },
+      {
+        "id": "avatar",
+        "component": "Avatar",
+        "src": { "path": "/profile/avatarUrl" },
+        "size": 72,
+        "shape": "circle"
+      },
+      {
+        "id": "right_col",
+        "component": "Column",
+        "children": ["name_row", "role_text", "stats_group", "tag_row", "cta_btn"],
+        "span": 18,
+        "style": { "gap": 8 }
+      },
+      {
+        "id": "name_row",
+        "component": "Row",
+        "children": ["name_text", "status_tag"],
+        "gutter": 8,
+        "align": "middle"
+      },
+      {
+        "id": "name_text",
+        "component": "Text",
+        "text": { "path": "/profile/name" },
+        "variant": "h4",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "status_tag",
+        "component": "Tag",
+        "text": { "path": "/profile/status" },
+        "color": "green",
+        "style": { "marginLeft": 8 }
+      },
+      {
+        "id": "role_text",
+        "component": "Text",
+        "text": { "path": "/profile/role" },
+        "variant": "body",
+        "style": { "color": "#8c8c8c", "margin": 0 }
+      },
+      {
+        "id": "stats_group",
+        "component": "Row",
+        "children": ["stat1", "stat2", "stat3"],
+        "gutter": 0,
+        "justify": "spaceAround",
+        "style": {
+          "backgroundColor": "rgba(22, 119, 255, 0.04)",
+          "borderRadius": 8,
+          "padding": "12px 0",
+          "marginTop": 8
+        }
+      },
+      {
+        "id": "stat1",
+        "component": "Statistic",
+        "title": "Projects",
+        "value": { "path": "/profile/projectCount" },
+        "style": { "textAlign": "center" }
+      },
+      {
+        "id": "stat2",
+        "component": "Statistic",
+        "title": "Rating",
+        "value": { "path": "/profile/rating" },
+        "suffix": "/5.0",
+        "style": { "textAlign": "center" }
+      },
+      {
+        "id": "stat3",
+        "component": "Statistic",
+        "title": "Years",
+        "value": { "path": "/profile/years" },
+        "style": { "textAlign": "center" }
+      },
+      {
+        "id": "tag_row",
+        "component": "Row",
+        "children": ["tag1", "tag2", "tag3"],
+        "gutter": [8, 4],
+        "style": { "marginTop": 8, "flexWrap": "wrap" }
+      },
+      {
+        "id": "tag1",
+        "component": "Tag",
+        "text": { "path": "/profile/tags/0" },
+        "color": "blue"
+      },
+      {
+        "id": "tag2",
+        "component": "Tag",
+        "text": { "path": "/profile/tags/1" },
+        "color": "geekblue"
+      },
+      {
+        "id": "tag3",
+        "component": "Tag",
+        "text": { "path": "/profile/tags/2" },
+        "color": "purple"
+      },
+      {
+        "id": "cta_btn",
+        "component": "Button",
+        "text": "View Profile",
+        "variant": "primary",
+        "size": "middle",
+        "action": {
+          "event": { "name": "viewProfile", "context": { "userId": { "path": "/profile/userId" } } }
+        },
+        "style": { "marginTop": 12 }
+      }
+    ]
+  }
+}

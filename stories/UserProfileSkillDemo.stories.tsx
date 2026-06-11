@@ -9,8 +9,8 @@ import { SurfaceManager } from '../src/SurfaceManager';
 
 import '../src/components/index';
 
-import componentsJson from '../.vibe/user_profile_components.json';
-import dataModelJson from '../.vibe/user_profile_datamodel.json';
+import componentsJson from './skill-demos/user-profile-components.json';
+import dataModelJson from './skill-demos/user-profile-datamodel.json';
 
 const meta: Meta<typeof GenUISurface> = {
   title: 'Skill Demo/User Profile Card',

@@ -1,0 +1,18 @@
+{
+  "version": "v0.9",
+  "updateDataModel": {
+    "surfaceId": "product_card",
+    "path": "/product",
+    "value": {
+      "id": "prod_8821",
+      "name": "Sony WH-1000XM5",
+      "price": "$349",
+      "description": "Industry-leading noise canceling with Auto NC Optimizer",
+      "imageUrl": "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&h=220&fit=crop",
+      "category": "Electronics",
+      "condition": "New",
+      "rating": 4.7,
+      "reviewCount": "2,341 reviews"
+    }
+  }
+}

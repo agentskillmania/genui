@@ -1,0 +1,118 @@
+{
+  "version": "v0.9",
+  "updateComponents": {
+    "surfaceId": "product_card",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "children": ["image_row", "info_col"],
+        "bordered": true,
+        "hoverable": true,
+        "style": { "maxWidth": 400, "overflow": "hidden" }
+      },
+      {
+        "id": "image_row",
+        "component": "Image",
+        "url": { "path": "/product/imageUrl" },
+        "description": { "path": "/product/name" },
+        "fit": "cover",
+        "width": "100%",
+        "height": 220,
+        "style": { "borderRadius": "8px 8px 0 0" }
+      },
+      {
+        "id": "info_col",
+        "component": "Column",
+        "children": ["title_row", "desc_text", "tag_row", "bottom_row"],
+        "style": { "padding": "16px 0 0", "gap": 8 }
+      },
+      {
+        "id": "title_row",
+        "component": "Row",
+        "children": ["name_text", "price_text"],
+        "justify": "spaceBetween",
+        "align": "middle"
+      },
+      {
+        "id": "name_text",
+        "component": "Text",
+        "text": { "path": "/product/name" },
+        "variant": "h4",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "price_text",
+        "component": "Text",
+        "text": { "path": "/product/price" },
+        "variant": "h4",
+        "strong": true,
+        "style": { "color": "#f5222d", "margin": 0 }
+      },
+      {
+        "id": "desc_text",
+        "component": "Text",
+        "text": { "path": "/product/description" },
+        "variant": "body",
+        "style": { "color": "#8c8c8c", "margin": 0 }
+      },
+      {
+        "id": "tag_row",
+        "component": "Row",
+        "children": ["tag1", "tag2"],
+        "gutter": [8, 0],
+        "wrap": true
+      },
+      {
+        "id": "tag1",
+        "component": "Tag",
+        "text": { "path": "/product/category" },
+        "color": "blue"
+      },
+      {
+        "id": "tag2",
+        "component": "Tag",
+        "text": { "path": "/product/condition" },
+        "color": "green"
+      },
+      {
+        "id": "bottom_row",
+        "component": "Row",
+        "children": ["rating_col", "cart_btn"],
+        "justify": "spaceBetween",
+        "align": "middle",
+        "style": { "marginTop": 8 }
+      },
+      {
+        "id": "rating_col",
+        "component": "Column",
+        "children": ["rate_comp", "review_text"],
+        "style": { "gap": 2 }
+      },
+      {
+        "id": "rate_comp",
+        "component": "Rate",
+        "value": { "path": "/product/rating" },
+        "count": 5,
+        "allowHalf": true,
+        "disabled": true
+      },
+      {
+        "id": "review_text",
+        "component": "Text",
+        "text": { "path": "/product/reviewCount" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "cart_btn",
+        "component": "Button",
+        "text": "Add to Cart",
+        "variant": "primary",
+        "size": "middle",
+        "action": { "event": { "name": "addToCart", "context": { "productId": { "path": "/product/id" } } } }
+      }
+    ]
+  }
+}

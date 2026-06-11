@@ -1,0 +1,24 @@
+{
+  "version": "v0.9",
+  "updateDataModel": {
+    "surfaceId": "task_dashboard",
+    "path": "/dashboard",
+    "value": {
+      "title": "Sprint #42",
+      "subtitle": "Week of June 9 — June 15, 2026",
+      "stats": {
+        "total": 24,
+        "done": 18,
+        "overdue": 2
+      },
+      "progressLabel": "Sprint Completion",
+      "progressPercent": 75,
+      "tasks": [
+        { "title": "Implement auth flow", "status": "Done" },
+        { "title": "Design system tokens", "status": "In Progress" },
+        { "title": "API integration tests", "status": "Review" },
+        { "title": "Fix payment timeout", "status": "Overdue" }
+      ]
+    }
+  }
+}

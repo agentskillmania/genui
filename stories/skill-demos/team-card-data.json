@@ -1,0 +1,37 @@
+{
+  "version": "v0.9",
+  "updateDataModel": {
+    "surfaceId": "team_card",
+    "path": "/team",
+    "value": {
+      "title": "Platform Team",
+      "department": "Engineering",
+      "memberCount": "8 members",
+      "stats": {
+        "avgTenure": 3.2,
+        "sprints": 12,
+        "satisfaction": 94
+      },
+      "members": [
+        {
+          "name": "Alex Rivera",
+          "title": "Tech Lead",
+          "role": "Lead",
+          "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex"
+        },
+        {
+          "name": "Mika Tanaka",
+          "title": "Senior Backend Dev",
+          "role": "Core",
+          "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Mika"
+        },
+        {
+          "name": "Jordan Lee",
+          "title": "DevOps Engineer",
+          "role": "Infra",
+          "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jordan"
+        }
+      ]
+    }
+  }
+}

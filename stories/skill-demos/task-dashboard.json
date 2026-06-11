@@ -1,0 +1,198 @@
+{
+  "version": "v0.9",
+  "updateComponents": {
+    "surfaceId": "task_dashboard",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "children": ["header_row", "stats_row", "progress_section", "task_list"],
+        "bordered": true,
+        "title": { "path": "/dashboard/title" },
+        "style": { "maxWidth": 520 }
+      },
+      {
+        "id": "header_row",
+        "component": "Row",
+        "children": ["subtitle_text", "filter_btn"],
+        "justify": "spaceBetween",
+        "align": "middle",
+        "style": { "marginBottom": 16 }
+      },
+      {
+        "id": "subtitle_text",
+        "component": "Text",
+        "text": { "path": "/dashboard/subtitle" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "filter_btn",
+        "component": "Button",
+        "text": "Filter",
+        "variant": "default",
+        "size": "small"
+      },
+      {
+        "id": "stats_row",
+        "component": "Row",
+        "children": ["stat1", "stat2", "stat3"],
+        "gutter": 16,
+        "style": { "marginBottom": 16 }
+      },
+      {
+        "id": "stat1",
+        "component": "Column",
+        "children": ["stat1_inner"],
+        "span": 8,
+        "style": { "background": "#e6f7ff", "borderRadius": 8, "padding": 12 }
+      },
+      {
+        "id": "stat1_inner",
+        "component": "Statistic",
+        "title": "Total",
+        "value": { "path": "/dashboard/stats/total" },
+        "valueStyle": { "color": "#1677ff" }
+      },
+      {
+        "id": "stat2",
+        "component": "Column",
+        "children": ["stat2_inner"],
+        "span": 8,
+        "style": { "background": "#f6ffed", "borderRadius": 8, "padding": 12 }
+      },
+      {
+        "id": "stat2_inner",
+        "component": "Statistic",
+        "title": "Done",
+        "value": { "path": "/dashboard/stats/done" },
+        "valueStyle": { "color": "#52c41a" }
+      },
+      {
+        "id": "stat3",
+        "component": "Column",
+        "children": ["stat3_inner"],
+        "span": 8,
+        "style": { "background": "#fff7e6", "borderRadius": 8, "padding": 12 }
+      },
+      {
+        "id": "stat3_inner",
+        "component": "Statistic",
+        "title": "Overdue",
+        "value": { "path": "/dashboard/stats/overdue" },
+        "valueStyle": { "color": "#fa8c16" }
+      },
+      {
+        "id": "progress_section",
+        "component": "Column",
+        "children": ["progress_label", "progress_bar"],
+        "style": { "marginBottom": 16, "gap": 6 }
+      },
+      {
+        "id": "progress_label",
+        "component": "Text",
+        "text": { "path": "/dashboard/progressLabel" },
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "progress_bar",
+        "component": "Progress",
+        "percent": { "path": "/dashboard/progressPercent" },
+        "status": "active",
+        "strokeColor": "#1677ff"
+      },
+      {
+        "id": "task_list",
+        "component": "Column",
+        "children": ["task1_row", "task2_row", "task3_row", "task4_row"],
+        "style": { "gap": 8 }
+      },
+      {
+        "id": "task1_row",
+        "component": "Row",
+        "children": ["task1_tag", "task1_text"],
+        "gutter": 8,
+        "align": "middle",
+        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 6 }
+      },
+      {
+        "id": "task1_tag",
+        "component": "Tag",
+        "text": { "path": "/dashboard/tasks/0/status" },
+        "color": "green"
+      },
+      {
+        "id": "task1_text",
+        "component": "Text",
+        "text": { "path": "/dashboard/tasks/0/title" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "task2_row",
+        "component": "Row",
+        "children": ["task2_tag", "task2_text"],
+        "gutter": 8,
+        "align": "middle",
+        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 6 }
+      },
+      {
+        "id": "task2_tag",
+        "component": "Tag",
+        "text": { "path": "/dashboard/tasks/1/status" },
+        "color": "blue"
+      },
+      {
+        "id": "task2_text",
+        "component": "Text",
+        "text": { "path": "/dashboard/tasks/1/title" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "task3_row",
+        "component": "Row",
+        "children": ["task3_tag", "task3_text"],
+        "gutter": 8,
+        "align": "middle",
+        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 6 }
+      },
+      {
+        "id": "task3_tag",
+        "component": "Tag",
+        "text": { "path": "/dashboard/tasks/2/status" },
+        "color": "orange"
+      },
+      {
+        "id": "task3_text",
+        "component": "Text",
+        "text": { "path": "/dashboard/tasks/2/title" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "task4_row",
+        "component": "Row",
+        "children": ["task4_tag", "task4_text"],
+        "gutter": 8,
+        "align": "middle",
+        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 6 }
+      },
+      {
+        "id": "task4_tag",
+        "component": "Tag",
+        "text": { "path": "/dashboard/tasks/3/status" },
+        "color": "red"
+      },
+      {
+        "id": "task4_text",
+        "component": "Text",
+        "text": { "path": "/dashboard/tasks/3/title" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      }
+    ]
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "version": "v0.9",
+  "updateComponents": {
+    "surfaceId": "notification_center",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "children": ["header_row", "alert1", "alert2", "divider1", "timeline_section"],
+        "bordered": true,
+        "title": { "path": "/notifications/title" },
+        "style": { "maxWidth": 480 }
+      },
+      {
+        "id": "header_row",
+        "component": "Row",
+        "children": ["unread_badge", "mark_read_btn"],
+        "justify": "spaceBetween",
+        "align": "middle",
+        "style": { "marginBottom": 12 }
+      },
+      {
+        "id": "unread_badge",
+        "component": "Text",
+        "text": { "path": "/notifications/unreadLabel" },
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "mark_read_btn",
+        "component": "Button",
+        "text": "Mark all read",
+        "variant": "link",
+        "size": "small"
+      },
+      {
+        "id": "alert1",
+        "component": "Alert",
+        "message": { "path": "/notifications/alerts/0/title" },
+        "description": { "path": "/notifications/alerts/0/body" },
+        "type": "success",
+        "showIcon": true,
+        "closable": true,
+        "style": { "marginBottom": 8 }
+      },
+      {
+        "id": "alert2",
+        "component": "Alert",
+        "message": { "path": "/notifications/alerts/1/title" },
+        "description": { "path": "/notifications/alerts/1/body" },
+        "type": "warning",
+        "showIcon": true,
+        "closable": true,
+        "style": { "marginBottom": 8 }
+      },
+      {
+        "id": "divider1",
+        "component": "Divider",
+        "orientation": "left",
+        "style": { "margin": "12px 0" }
+      },
+      {
+        "id": "timeline_section",
+        "component": "Column",
+        "children": ["tl_label", "timeline"],
+        "style": { "gap": 8 }
+      },
+      {
+        "id": "tl_label",
+        "component": "Text",
+        "text": "Recent Activity",
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "timeline",
+        "component": "Timeline",
+        "items": [
+          { "children": "Deployment completed", "color": "green" },
+          { "children": "Code review requested", "color": "blue" },
+          { "children": "New branch created: feat/auth", "color": "gray" },
+          { "children": "Issue #142 assigned to you", "color": "red" }
+        ],
+        "mode": "left"
+      }
+    ]
+  }
+}

@@ -1,0 +1,175 @@
+{
+  "version": "v0.9",
+  "updateComponents": {
+    "surfaceId": "order_summary",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "children": ["title_text", "divider1", "item_row1", "item_row2", "divider2", "total_row", "status_row", "divider3", "detail_desc", "action_row"],
+        "bordered": true,
+        "style": { "maxWidth": 480 }
+      },
+      {
+        "id": "title_text",
+        "component": "Text",
+        "text": { "path": "/order/title" },
+        "variant": "h4",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "divider1",
+        "component": "Divider",
+        "style": { "margin": "12px 0" }
+      },
+      {
+        "id": "item_row1",
+        "component": "Row",
+        "children": ["item1_name", "item1_qty", "item1_price"],
+        "justify": "spaceBetween",
+        "align": "middle",
+        "style": { "marginBottom": 8 }
+      },
+      {
+        "id": "item1_name",
+        "component": "Text",
+        "text": { "path": "/order/items/0/name" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "item1_qty",
+        "component": "Text",
+        "text": { "path": "/order/items/0/qty" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "item1_price",
+        "component": "Text",
+        "text": { "path": "/order/items/0/price" },
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "item_row2",
+        "component": "Row",
+        "children": ["item2_name", "item2_qty", "item2_price"],
+        "justify": "spaceBetween",
+        "align": "middle",
+        "style": { "marginBottom": 8 }
+      },
+      {
+        "id": "item2_name",
+        "component": "Text",
+        "text": { "path": "/order/items/1/name" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "item2_qty",
+        "component": "Text",
+        "text": { "path": "/order/items/1/qty" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "item2_price",
+        "component": "Text",
+        "text": { "path": "/order/items/1/price" },
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "divider2",
+        "component": "Divider",
+        "style": { "margin": "12px 0" }
+      },
+      {
+        "id": "total_row",
+        "component": "Row",
+        "children": ["total_label", "total_value"],
+        "justify": "spaceBetween",
+        "align": "middle"
+      },
+      {
+        "id": "total_label",
+        "component": "Text",
+        "text": "Total",
+        "variant": "h4",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "total_value",
+        "component": "Text",
+        "text": { "path": "/order/total" },
+        "variant": "h4",
+        "strong": true,
+        "style": { "margin": 0, "color": "#1677ff" }
+      },
+      {
+        "id": "status_row",
+        "component": "Row",
+        "children": ["status_tag", "date_text"],
+        "justify": "spaceBetween",
+        "align": "middle",
+        "style": { "marginTop": 8 }
+      },
+      {
+        "id": "status_tag",
+        "component": "Tag",
+        "text": { "path": "/order/status" },
+        "color": "blue"
+      },
+      {
+        "id": "date_text",
+        "component": "Text",
+        "text": { "path": "/order/date" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "divider3",
+        "component": "Divider",
+        "style": { "margin": "12px 0" }
+      },
+      {
+        "id": "detail_desc",
+        "component": "Descriptions",
+        "title": "Shipping Details",
+        "items": [
+          { "key": "addr", "label": "Address", "children": "123 Main St, San Francisco, CA 94102" },
+          { "key": "method", "label": "Method", "children": "Express (2-3 days)" },
+          { "key": "track", "label": "Tracking", "children": "1Z999AA10123456784" }
+        ],
+        "column": 1,
+        "size": "small"
+      },
+      {
+        "id": "action_row",
+        "component": "Row",
+        "children": ["back_btn", "track_btn"],
+        "justify": "end",
+        "gutter": 8,
+        "style": { "marginTop": 8 }
+      },
+      {
+        "id": "back_btn",
+        "component": "Button",
+        "text": "Back to Orders",
+        "variant": "default"
+      },
+      {
+        "id": "track_btn",
+        "component": "Button",
+        "text": "Track Package",
+        "variant": "primary",
+        "action": { "event": { "name": "trackOrder", "context": { "orderId": { "path": "/order/orderId" } } } }
+      }
+    ]
+  }
+}

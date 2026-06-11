@@ -1,0 +1,21 @@
+{
+  "version": "v0.9",
+  "updateDataModel": {
+    "surfaceId": "notification_center",
+    "path": "/notifications",
+    "value": {
+      "title": "Notifications",
+      "unreadLabel": "3 unread",
+      "alerts": [
+        {
+          "title": "Build Succeeded",
+          "body": "Pipeline #1847 for main branch completed in 2m 14s."
+        },
+        {
+          "title": "Disk Usage at 82%",
+          "body": "Server prod-us-east-1 storage is approaching capacity. Consider cleanup."
+        }
+      ]
+    }
+  }
+}

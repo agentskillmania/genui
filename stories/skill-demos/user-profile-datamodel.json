@@ -1,0 +1,18 @@
+{
+  "version": "v0.9",
+  "updateDataModel": {
+    "surfaceId": "user_profile",
+    "path": "/profile",
+    "value": {
+      "userId": "u_10042",
+      "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+      "name": "Sarah Chen",
+      "role": "Senior Frontend Engineer",
+      "status": "Available",
+      "projectCount": 23,
+      "rating": 4.9,
+      "years": 6,
+      "tags": ["React", "TypeScript", "Design Systems"]
+    }
+  }
+}

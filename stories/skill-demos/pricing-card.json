@@ -1,0 +1,111 @@
+{
+  "version": "v0.9",
+  "updateComponents": {
+    "surfaceId": "pricing_card",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "children": ["plan_badge", "price_row", "desc_text", "divider1", "feature_col", "divider2", "cta_btn"],
+        "bordered": true,
+        "style": { "maxWidth": 360, "textAlign": "center" }
+      },
+      {
+        "id": "plan_badge",
+        "component": "Tag",
+        "text": { "path": "/pricing/plan" },
+        "color": "purple",
+        "style": { "marginBottom": 12 }
+      },
+      {
+        "id": "price_row",
+        "component": "Row",
+        "children": ["amount_col"],
+        "justify": "center",
+        "align": "bottom",
+        "style": { "marginBottom": 4 }
+      },
+      {
+        "id": "amount_col",
+        "component": "Column",
+        "children": ["amount_text", "period_text"],
+        "style": { "gap": 0, "alignItems": "center" }
+      },
+      {
+        "id": "amount_text",
+        "component": "Text",
+        "text": { "path": "/pricing/price" },
+        "variant": "h2",
+        "strong": true,
+        "style": { "margin": 0, "color": "#722ed1" }
+      },
+      {
+        "id": "period_text",
+        "component": "Text",
+        "text": { "path": "/pricing/period" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "desc_text",
+        "component": "Text",
+        "text": { "path": "/pricing/description" },
+        "variant": "body",
+        "style": { "color": "#8c8c8c", "margin": "8px 0 0" }
+      },
+      {
+        "id": "divider1",
+        "component": "Divider",
+        "style": { "margin": "16px 0" }
+      },
+      {
+        "id": "feature_col",
+        "component": "Column",
+        "children": ["feat1", "feat2", "feat3", "feat4"],
+        "style": { "gap": 8, "alignItems": "flex-start" }
+      },
+      {
+        "id": "feat1",
+        "component": "Text",
+        "text": { "path": "/pricing/features/0" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "feat2",
+        "component": "Text",
+        "text": { "path": "/pricing/features/1" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "feat3",
+        "component": "Text",
+        "text": { "path": "/pricing/features/2" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "feat4",
+        "component": "Text",
+        "text": { "path": "/pricing/features/3" },
+        "variant": "body",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "divider2",
+        "component": "Divider",
+        "style": { "margin": "16px 0" }
+      },
+      {
+        "id": "cta_btn",
+        "component": "Button",
+        "text": { "path": "/pricing/ctaText" },
+        "variant": "primary",
+        "size": "large",
+        "action": { "event": { "name": "selectPlan", "context": { "planId": { "path": "/pricing/planId" } } } },
+        "style": { "width": "100%" }
+      }
+    ]
+  }
+}

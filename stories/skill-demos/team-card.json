@@ -1,0 +1,199 @@
+{
+  "version": "v0.9",
+  "updateComponents": {
+    "surfaceId": "team_card",
+    "components": [
+      {
+        "id": "root",
+        "component": "Card",
+        "children": ["header_row", "stats_row", "member_list"],
+        "bordered": true,
+        "title": { "path": "/team/title" },
+        "style": { "maxWidth": 480 }
+      },
+      {
+        "id": "header_row",
+        "component": "Row",
+        "children": ["dept_tag", "count_text"],
+        "justify": "spaceBetween",
+        "align": "middle",
+        "style": { "marginBottom": 16 }
+      },
+      {
+        "id": "dept_tag",
+        "component": "Tag",
+        "text": { "path": "/team/department" },
+        "color": "geekblue"
+      },
+      {
+        "id": "count_text",
+        "component": "Text",
+        "text": { "path": "/team/memberCount" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "stats_row",
+        "component": "Row",
+        "children": ["stat1", "stat2", "stat3"],
+        "gutter": 16,
+        "style": { "marginBottom": 16, "backgroundColor": "rgba(22, 119, 255, 0.04)", "borderRadius": 8, "padding": "12px 0" }
+      },
+      {
+        "id": "stat1",
+        "component": "Statistic",
+        "title": "Avg Tenure",
+        "value": { "path": "/team/stats/avgTenure" },
+        "suffix": "yrs",
+        "style": { "textAlign": "center" }
+      },
+      {
+        "id": "stat2",
+        "component": "Statistic",
+        "title": "Sprints/Quarter",
+        "value": { "path": "/team/stats/sprints" },
+        "style": { "textAlign": "center" }
+      },
+      {
+        "id": "stat3",
+        "component": "Statistic",
+        "title": "Satisfaction",
+        "value": { "path": "/team/stats/satisfaction" },
+        "suffix": "%",
+        "style": { "textAlign": "center" }
+      },
+      {
+        "id": "member_list",
+        "component": "Column",
+        "children": ["member1_row", "member2_row", "member3_row"],
+        "style": { "gap": 12 }
+      },
+      {
+        "id": "member1_row",
+        "component": "Row",
+        "children": ["m1_avatar", "m1_info_col", "m1_role_tag"],
+        "gutter": 12,
+        "align": "middle",
+        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 8 }
+      },
+      {
+        "id": "m1_avatar",
+        "component": "Avatar",
+        "src": { "path": "/team/members/0/avatar" },
+        "size": 40,
+        "shape": "circle"
+      },
+      {
+        "id": "m1_info_col",
+        "component": "Column",
+        "children": ["m1_name", "m1_title"],
+        "style": { "gap": 2, "flex": 1 }
+      },
+      {
+        "id": "m1_name",
+        "component": "Text",
+        "text": { "path": "/team/members/0/name" },
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "m1_title",
+        "component": "Text",
+        "text": { "path": "/team/members/0/title" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "m1_role_tag",
+        "component": "Tag",
+        "text": { "path": "/team/members/0/role" },
+        "color": "blue"
+      },
+      {
+        "id": "member2_row",
+        "component": "Row",
+        "children": ["m2_avatar", "m2_info_col", "m2_role_tag"],
+        "gutter": 12,
+        "align": "middle",
+        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 8 }
+      },
+      {
+        "id": "m2_avatar",
+        "component": "Avatar",
+        "src": { "path": "/team/members/1/avatar" },
+        "size": 40,
+        "shape": "circle"
+      },
+      {
+        "id": "m2_info_col",
+        "component": "Column",
+        "children": ["m2_name", "m2_title"],
+        "style": { "gap": 2, "flex": 1 }
+      },
+      {
+        "id": "m2_name",
+        "component": "Text",
+        "text": { "path": "/team/members/1/name" },
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "m2_title",
+        "component": "Text",
+        "text": { "path": "/team/members/1/title" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "m2_role_tag",
+        "component": "Tag",
+        "text": { "path": "/team/members/1/role" },
+        "color": "green"
+      },
+      {
+        "id": "member3_row",
+        "component": "Row",
+        "children": ["m3_avatar", "m3_info_col", "m3_role_tag"],
+        "gutter": 12,
+        "align": "middle",
+        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 8 }
+      },
+      {
+        "id": "m3_avatar",
+        "component": "Avatar",
+        "src": { "path": "/team/members/2/avatar" },
+        "size": 40,
+        "shape": "circle"
+      },
+      {
+        "id": "m3_info_col",
+        "component": "Column",
+        "children": ["m3_name", "m3_title"],
+        "style": { "gap": 2, "flex": 1 }
+      },
+      {
+        "id": "m3_name",
+        "component": "Text",
+        "text": { "path": "/team/members/2/name" },
+        "variant": "body",
+        "strong": true,
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "m3_title",
+        "component": "Text",
+        "text": { "path": "/team/members/2/title" },
+        "variant": "caption",
+        "style": { "margin": 0 }
+      },
+      {
+        "id": "m3_role_tag",
+        "component": "Tag",
+        "text": { "path": "/team/members/2/role" },
+        "color": "orange"
+      }
+    ]
+  }
+}

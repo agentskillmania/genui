@@ -1,0 +1,21 @@
+{
+  "version": "v0.9",
+  "updateDataModel": {
+    "surfaceId": "pricing_card",
+    "path": "/pricing",
+    "value": {
+      "planId": "pro_monthly",
+      "plan": "PRO",
+      "price": "$29",
+      "period": "per month",
+      "description": "Best for growing teams that need more power",
+      "features": [
+        "✓ Unlimited projects",
+        "✓ 50 GB storage",
+        "✓ Priority support",
+        "✓ Advanced analytics"
+      ],
+      "ctaText": "Get Started"
+    }
+  }
+}
