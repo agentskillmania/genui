@@ -30,7 +30,7 @@ export {
 } from './components/registry';
 
 // ===== Tools =====
-export { validateA2UIMessage, classifyA2UIEvent } from './tools/schemaValidator';
+export { validateA2UIMessage, classifyA2UIEvent, componentSchema, A2UI_VERSION } from './tools/schemaValidator';
 export { exportCatalog } from './tools/catalogExport';
 
 // ===== Types =====
