@@ -59,7 +59,7 @@ export type { GenUISurfaceProps } from './components/Surface';
 
 export type { SurfaceEvent, SurfaceEventListener } from './engine/types';
 
-export type { A2UICatalog, CatalogEntry } from './tools/catalogExport';
+export type { A2UICatalog } from './tools/catalogExport';
 
 // ===== Component registration (side-effect import — not tree-shakeable) =====
 import './components/index';
