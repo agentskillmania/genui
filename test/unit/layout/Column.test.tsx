@@ -77,16 +77,35 @@ describe('Column component', () => {
     expect(colEl!.className).toContain('ant-col-offset-2');
   });
 
-  it('merges custom style with default flex styles', () => {
+  it('moves visual styles to inner wrapper to keep gutter transparent', () => {
     const { container } = render(
-      <Column {...makeProps({ style: { backgroundColor: 'green' } })}>
+      <Column {...makeProps({ style: { backgroundColor: 'green', padding: 12 } })}>
+        <div>Item</div>
+      </Column>,
+    );
+
+    // Visual styles go to inner wrapper, not the Col itself
+    const colEl = container.querySelector('.ant-col') as HTMLElement;
+    expect(colEl.style.backgroundColor).toBeFalsy();
+    expect(colEl.style.padding).toBe('12px');
+
+    // Inner wrapper holds the visual styles
+    const inner = colEl.querySelector('div') as HTMLElement;
+    expect(inner.style.backgroundColor).toBe('green');
+    expect(inner.style.display).toBe('flex');
+    expect(inner.style.flexDirection).toBe('column');
+  });
+
+  it('applies non-visual styles directly to Col', () => {
+    const { container } = render(
+      <Column {...makeProps({ style: { marginTop: 8, padding: 16 } })}>
         <div>Item</div>
       </Column>,
     );
 
     const colEl = container.querySelector('.ant-col') as HTMLElement;
-    expect(colEl.style.backgroundColor).toBe('green');
-    // Default flex styles are still applied
+    expect(colEl.style.marginTop).toBe('8px');
+    expect(colEl.style.padding).toBe('16px');
     expect(colEl.style.display).toBe('flex');
     expect(colEl.style.flexDirection).toBe('column');
   });
