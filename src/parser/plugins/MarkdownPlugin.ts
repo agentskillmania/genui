@@ -25,7 +25,7 @@ export class MarkdownPlugin implements IStreamPlugin {
       surfaceId: detection.surfaceId,
       componentJson: JSON.stringify({
         id: detection.componentId,
-        type: 'Markdown',
+        component: 'Markdown',
         content: detection.partialContent,
       }),
     };

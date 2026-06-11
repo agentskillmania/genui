@@ -25,7 +25,7 @@ export class TextPlugin implements IStreamPlugin {
       surfaceId: detection.surfaceId,
       componentJson: JSON.stringify({
         id: detection.componentId,
-        type: 'Text',
+        component: 'Text',
         text: detection.partialContent,
       }),
     };

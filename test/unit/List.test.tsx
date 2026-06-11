@@ -1,10 +1,10 @@
 /**
  * Unit tests for the List layout component.
  * Covers: flexShrink:0 container wrapper, rendering children as list items,
- * prop forwarding, and edge cases.
+ * prop forwarding, header/footer rendering, and edge cases.
  */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { List } from '../../src/components/layout/List';
@@ -14,7 +14,7 @@ import { List } from '../../src/components/layout/List';
 function makeProps(overrides: Record<string, unknown> = {}) {
   return {
     id: 'list-1',
-    type: 'List',
+    component: 'List',
     properties: {
       ...overrides,
     },
@@ -44,11 +44,11 @@ describe('List component', () => {
       </List>,
     );
 
-    expect(screen.getByText('Alpha')).toBeTruthy();
-    expect(screen.getByText('Beta')).toBeTruthy();
+    expect(screen.getByText('Alpha')).toBeDefined();
+    expect(screen.getByText('Beta')).toBeDefined();
   });
 
-  it('applies user style to the wrapper container', () => {
+  it('applies user style alongside flexShrink:0', () => {
     const { container } = render(
       <List
         {...makeProps({
@@ -61,7 +61,6 @@ describe('List component', () => {
 
     const wrapperDiv = container.firstChild as HTMLElement;
     expect(wrapperDiv.style.backgroundColor).toBe('red');
-    // flexShrink:0 should still be present alongside user styles
     expect(wrapperDiv.style.flexShrink).toBe('0');
   });
 
@@ -76,12 +75,7 @@ describe('List component', () => {
       </List>,
     );
 
-    expect(screen.getByText('My List')).toBeTruthy();
-  });
-
-  it('renders without children without crashing', () => {
-    const { container } = render(<List {...makeProps()} />);
-    expect(container.firstChild).toBeTruthy();
+    expect(screen.getByText('My List')).toBeDefined();
   });
 
   it('renders footer when provided', () => {
@@ -95,6 +89,43 @@ describe('List component', () => {
       </List>,
     );
 
-    expect(screen.getByText('End of list')).toBeTruthy();
+    expect(screen.getByText('End of list')).toBeDefined();
+  });
+
+  // ---- Negative paths ----
+
+  describe('negative paths', () => {
+    it('renders without children without crashing', () => {
+      const { container } = render(<List {...makeProps()} />);
+      expect(container.firstChild).toBeTruthy();
+      // Container exists even with no children
+      const wrapperDiv = container.firstChild as HTMLElement;
+      expect(wrapperDiv.style.flexShrink).toBe('0');
+    });
+
+    it('renders without properties without crashing', () => {
+      // properties is required by type, but runtime defense (?? {}) handles undefined gracefully
+      const { container } = render(<List id="empty" component="List" properties={{}} />);
+      expect(container.firstChild).toBeTruthy();
+    });
+
+    it('renders empty string header without crashing', () => {
+      // Empty header — component should render but not show a header section
+      const { container } = render(
+        <List {...makeProps({ header: '' })}>
+          <div>Item</div>
+        </List>,
+      );
+      expect(container.firstChild).toBeTruthy();
+    });
+
+    it('renders empty string footer without crashing', () => {
+      const { container } = render(
+        <List {...makeProps({ footer: '' })}>
+          <div>Item</div>
+        </List>,
+      );
+      expect(container.firstChild).toBeTruthy();
+    });
   });
 });
