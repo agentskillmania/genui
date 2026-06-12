@@ -5,193 +5,284 @@
     "components": [
       {
         "id": "root",
+        "component": "Column",
+        "children": ["card"]
+      },
+      {
+        "id": "card",
         "component": "Card",
-        "children": ["header_row", "stats_row", "member_list"],
+        "children": ["header_row", "stats_row", "divider", "members_list"],
+        "title": {"path": "/team/title"},
         "bordered": true,
-        "title": { "path": "/team/title" },
-        "style": { "maxWidth": 480 }
+        "style": {
+          "width": "100%",
+          "maxWidth": 480
+        }
       },
       {
         "id": "header_row",
         "component": "Row",
-        "children": ["dept_tag", "count_text"],
+        "children": ["department_tag", "member_count_text"],
         "justify": "spaceBetween",
         "align": "middle",
-        "style": { "marginBottom": 16 }
+        "gutter": 8
       },
       {
-        "id": "dept_tag",
+        "id": "department_tag",
         "component": "Tag",
-        "text": { "path": "/team/department" },
-        "color": "geekblue"
+        "text": {"path": "/team/department"},
+        "color": "geekblue",
+        "bordered": true
       },
       {
-        "id": "count_text",
+        "id": "member_count_text",
         "component": "Text",
-        "text": { "path": "/team/memberCount" },
+        "text": {"path": "/team/memberCount"},
         "variant": "caption",
-        "style": { "margin": 0 }
+        "color": "#666",
+        "style": {
+          "whiteSpace": "nowrap"
+        }
       },
       {
         "id": "stats_row",
         "component": "Row",
-        "children": ["stat1", "stat2", "stat3"],
+        "children": ["avg_tenure_col", "sprints_col", "satisfaction_col"],
         "gutter": 16,
-        "style": { "marginBottom": 16, "backgroundColor": "rgba(22, 119, 255, 0.04)", "borderRadius": 8, "padding": "12px 0" }
+        "style": {
+          "backgroundColor": "rgba(22, 119, 255, 0.04)",
+          "borderRadius": 8,
+          "padding": "12px 0"
+        }
       },
       {
-        "id": "stat1",
+        "id": "avg_tenure_col",
+        "component": "Column",
+        "children": ["avg_tenure_stat"],
+        "flex": 1,
+        "style": {
+          "textAlign": "center"
+        }
+      },
+      {
+        "id": "avg_tenure_stat",
         "component": "Statistic",
         "title": "Avg Tenure",
-        "value": { "path": "/team/stats/avgTenure" },
+        "value": {"path": "/team/stats/avgTenure"},
         "suffix": "yrs",
-        "style": { "textAlign": "center" }
+        "precision": 1
       },
       {
-        "id": "stat2",
+        "id": "sprints_col",
+        "component": "Column",
+        "children": ["sprints_stat"],
+        "flex": 1,
+        "style": {
+          "textAlign": "center"
+        }
+      },
+      {
+        "id": "sprints_stat",
         "component": "Statistic",
-        "title": "Sprints/Quarter",
-        "value": { "path": "/team/stats/sprints" },
-        "style": { "textAlign": "center" }
+        "title": "Sprints / Quarter",
+        "value": {"path": "/team/stats/sprints"},
+        "precision": 0
       },
       {
-        "id": "stat3",
+        "id": "satisfaction_col",
+        "component": "Column",
+        "children": ["satisfaction_stat"],
+        "flex": 1,
+        "style": {
+          "textAlign": "center"
+        }
+      },
+      {
+        "id": "satisfaction_stat",
         "component": "Statistic",
         "title": "Satisfaction",
-        "value": { "path": "/team/stats/satisfaction" },
+        "value": {"path": "/team/stats/satisfaction"},
         "suffix": "%",
-        "style": { "textAlign": "center" }
+        "precision": 0
       },
       {
-        "id": "member_list",
+        "id": "divider",
+        "component": "Divider",
+        "orientation": "left",
+        "type": "horizontal",
+        "plain": true
+      },
+      {
+        "id": "members_list",
         "component": "Column",
-        "children": ["member1_row", "member2_row", "member3_row"],
-        "style": { "gap": 12 }
+        "children": ["member_1", "member_2", "member_3"],
+        "style": {
+          "gap": 12
+        }
       },
       {
-        "id": "member1_row",
+        "id": "member_1",
         "component": "Row",
-        "children": ["m1_avatar", "m1_info_col", "m1_role_tag"],
-        "gutter": 12,
+        "children": ["member_1_avatar", "member_1_info_col", "member_1_role_tag"],
         "align": "middle",
-        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 8 }
+        "gutter": 12,
+        "style": {
+          "padding": "8px 12px",
+          "background": "#fafafa",
+          "borderRadius": 8
+        }
       },
       {
-        "id": "m1_avatar",
+        "id": "member_1_avatar",
         "component": "Avatar",
-        "src": { "path": "/team/members/0/avatar" },
+        "src": {"path": "/team/members/0/avatar"},
+        "alt": {"path": "/team/members/0/name"},
         "size": 40,
         "shape": "circle"
       },
       {
-        "id": "m1_info_col",
+        "id": "member_1_info_col",
         "component": "Column",
-        "children": ["m1_name", "m1_title"],
-        "style": { "gap": 2, "flex": 1 }
+        "children": ["member_1_name", "member_1_title"],
+        "flex": 1,
+        "style": {
+          "gap": 2
+        }
       },
       {
-        "id": "m1_name",
+        "id": "member_1_name",
         "component": "Text",
-        "text": { "path": "/team/members/0/name" },
+        "text": {"path": "/team/members/0/name"},
         "variant": "body",
         "strong": true,
-        "style": { "margin": 0 }
+        "style": {
+          "margin": 0
+        }
       },
       {
-        "id": "m1_title",
+        "id": "member_1_title",
         "component": "Text",
-        "text": { "path": "/team/members/0/title" },
+        "text": {"path": "/team/members/0/title"},
         "variant": "caption",
-        "style": { "margin": 0 }
+        "color": "#666",
+        "style": {
+          "margin": 0
+        }
       },
       {
-        "id": "m1_role_tag",
+        "id": "member_1_role_tag",
         "component": "Tag",
-        "text": { "path": "/team/members/0/role" },
+        "text": {"path": "/team/members/0/role"},
         "color": "blue"
       },
       {
-        "id": "member2_row",
+        "id": "member_2",
         "component": "Row",
-        "children": ["m2_avatar", "m2_info_col", "m2_role_tag"],
-        "gutter": 12,
+        "children": ["member_2_avatar", "member_2_info_col", "member_2_role_tag"],
         "align": "middle",
-        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 8 }
+        "gutter": 12,
+        "style": {
+          "padding": "8px 12px",
+          "background": "#fafafa",
+          "borderRadius": 8
+        }
       },
       {
-        "id": "m2_avatar",
+        "id": "member_2_avatar",
         "component": "Avatar",
-        "src": { "path": "/team/members/1/avatar" },
+        "src": {"path": "/team/members/1/avatar"},
+        "alt": {"path": "/team/members/1/name"},
         "size": 40,
         "shape": "circle"
       },
       {
-        "id": "m2_info_col",
+        "id": "member_2_info_col",
         "component": "Column",
-        "children": ["m2_name", "m2_title"],
-        "style": { "gap": 2, "flex": 1 }
+        "children": ["member_2_name", "member_2_title"],
+        "flex": 1,
+        "style": {
+          "gap": 2
+        }
       },
       {
-        "id": "m2_name",
+        "id": "member_2_name",
         "component": "Text",
-        "text": { "path": "/team/members/1/name" },
+        "text": {"path": "/team/members/1/name"},
         "variant": "body",
         "strong": true,
-        "style": { "margin": 0 }
+        "style": {
+          "margin": 0
+        }
       },
       {
-        "id": "m2_title",
+        "id": "member_2_title",
         "component": "Text",
-        "text": { "path": "/team/members/1/title" },
+        "text": {"path": "/team/members/1/title"},
         "variant": "caption",
-        "style": { "margin": 0 }
+        "color": "#666",
+        "style": {
+          "margin": 0
+        }
       },
       {
-        "id": "m2_role_tag",
+        "id": "member_2_role_tag",
         "component": "Tag",
-        "text": { "path": "/team/members/1/role" },
+        "text": {"path": "/team/members/1/role"},
         "color": "green"
       },
       {
-        "id": "member3_row",
+        "id": "member_3",
         "component": "Row",
-        "children": ["m3_avatar", "m3_info_col", "m3_role_tag"],
-        "gutter": 12,
+        "children": ["member_3_avatar", "member_3_info_col", "member_3_role_tag"],
         "align": "middle",
-        "style": { "padding": "8px 12px", "background": "#fafafa", "borderRadius": 8 }
+        "gutter": 12,
+        "style": {
+          "padding": "8px 12px",
+          "background": "#fafafa",
+          "borderRadius": 8
+        }
       },
       {
-        "id": "m3_avatar",
+        "id": "member_3_avatar",
         "component": "Avatar",
-        "src": { "path": "/team/members/2/avatar" },
+        "src": {"path": "/team/members/2/avatar"},
+        "alt": {"path": "/team/members/2/name"},
         "size": 40,
         "shape": "circle"
       },
       {
-        "id": "m3_info_col",
+        "id": "member_3_info_col",
         "component": "Column",
-        "children": ["m3_name", "m3_title"],
-        "style": { "gap": 2, "flex": 1 }
+        "children": ["member_3_name", "member_3_title"],
+        "flex": 1,
+        "style": {
+          "gap": 2
+        }
       },
       {
-        "id": "m3_name",
+        "id": "member_3_name",
         "component": "Text",
-        "text": { "path": "/team/members/2/name" },
+        "text": {"path": "/team/members/2/name"},
         "variant": "body",
         "strong": true,
-        "style": { "margin": 0 }
+        "style": {
+          "margin": 0
+        }
       },
       {
-        "id": "m3_title",
+        "id": "member_3_title",
         "component": "Text",
-        "text": { "path": "/team/members/2/title" },
+        "text": {"path": "/team/members/2/title"},
         "variant": "caption",
-        "style": { "margin": 0 }
+        "color": "#666",
+        "style": {
+          "margin": 0
+        }
       },
       {
-        "id": "m3_role_tag",
+        "id": "member_3_role_tag",
         "component": "Tag",
-        "text": { "path": "/team/members/2/role" },
+        "text": {"path": "/team/members/2/role"},
         "color": "orange"
       }
     ]
