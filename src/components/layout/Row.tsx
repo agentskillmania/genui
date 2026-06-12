@@ -7,7 +7,8 @@ import type { GenUIComponentProps } from '../types';
  *
  * Ant Design's Row expects Col children for proper grid distribution.
  * When a child is NOT a Column component, it is automatically wrapped
- * in a Col with `flex={1}` so it participates in the grid layout.
+ * in a Col with `flex="auto"` (natural content width) so it participates
+ * in the grid layout while respecting the Row's `justify` property.
  * Children that are already Column components pass through unchanged.
  */
 export const Row: React.FC<GenUIComponentProps> = ({ properties, children, childTypes }) => {
@@ -15,11 +16,12 @@ export const Row: React.FC<GenUIComponentProps> = ({ properties, children, child
 
   const childArray = React.Children.toArray(children);
 
-  // Wrap non-Column children in Col so Ant Design grid distributes them correctly
+  // Wrap non-Column children in Col so Ant Design grid distributes them correctly.
+  // Use flex="auto" (natural content width) to respect the Row's justify property.
   const wrappedChildren = childArray.map((child, index) => {
     const type = childTypes?.[index];
     if (type === 'Column') return child;
-    return <Col key={`auto-col-${index}`} flex={1}>{child}</Col>;
+    return <Col key={`auto-col-${index}`} flex="auto">{child}</Col>;
   });
 
   return (

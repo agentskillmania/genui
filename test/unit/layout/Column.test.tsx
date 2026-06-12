@@ -77,37 +77,43 @@ describe('Column component', () => {
     expect(colEl!.className).toContain('ant-col-offset-2');
   });
 
-  it('moves visual styles to inner wrapper to keep gutter transparent', () => {
+  it('moves all user styles to inner wrapper when visual properties present', () => {
     const { container } = render(
-      <Column {...makeProps({ style: { backgroundColor: 'green', padding: 12 } })}>
-        <div>Item</div>
+      <Column {...makeProps({ style: { backgroundColor: 'green', padding: 12, borderRadius: 8 } })}>
+        <span>Item</span>
       </Column>,
     );
 
-    // Visual styles go to inner wrapper, not the Col itself
+    // Col only has base flex styles — no user styles
     const colEl = container.querySelector('.ant-col') as HTMLElement;
     expect(colEl.style.backgroundColor).toBeFalsy();
-    expect(colEl.style.padding).toBe('12px');
+    expect(colEl.style.padding).toBeFalsy();
+    expect(colEl.style.borderRadius).toBeFalsy();
+    expect(colEl.style.display).toBe('flex');
 
-    // Inner wrapper holds the visual styles
+    // Inner wrapper holds ALL user styles (first child div = the wrapper)
     const inner = colEl.querySelector('div') as HTMLElement;
     expect(inner.style.backgroundColor).toBe('green');
+    expect(inner.style.padding).toBe('12px');
+    expect(inner.style.borderRadius).toBe('8px');
     expect(inner.style.display).toBe('flex');
     expect(inner.style.flexDirection).toBe('column');
+    expect(inner.style.flexGrow).toBe('1');
   });
 
-  it('applies non-visual styles directly to Col', () => {
+  it('applies non-visual styles directly to Col without inner wrapper', () => {
     const { container } = render(
       <Column {...makeProps({ style: { marginTop: 8, padding: 16 } })}>
-        <div>Item</div>
+        <span>Item</span>
       </Column>,
     );
 
+    // No visual properties → no inner wrapper div
     const colEl = container.querySelector('.ant-col') as HTMLElement;
+    expect(colEl.querySelector('div')).toBeNull();
     expect(colEl.style.marginTop).toBe('8px');
     expect(colEl.style.padding).toBe('16px');
     expect(colEl.style.display).toBe('flex');
-    expect(colEl.style.flexDirection).toBe('column');
   });
 
   it('renders multiple children', () => {
