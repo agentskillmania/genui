@@ -34,7 +34,7 @@
       {
         "id": "right_col",
         "component": "Column",
-        "children": ["name_row", "role_text", "stats_group", "tag_row", "cta_btn"],
+        "children": ["name_row", "role_text", "stats_row", "tag_row", "cta_btn"],
         "span": 18,
         "style": { "gap": 8 }
       },
@@ -68,11 +68,10 @@
         "style": { "color": "#8c8c8c", "margin": 0 }
       },
       {
-        "id": "stats_group",
+        "id": "stats_row",
         "component": "Row",
-        "children": ["stat1", "stat2", "stat3"],
+        "children": ["stat1_col", "stat2_col", "stat3_col"],
         "gutter": 0,
-        "justify": "spaceAround",
         "style": {
           "backgroundColor": "rgba(22, 119, 255, 0.04)",
           "borderRadius": 8,
@@ -81,10 +80,23 @@
         }
       },
       {
+        "id": "stat1_col",
+        "component": "Column",
+        "children": ["stat1"],
+        "flex": 1,
+        "style": { "textAlign": "center" }
+      },
+      {
         "id": "stat1",
         "component": "Statistic",
         "title": "Projects",
-        "value": { "path": "/profile/projectCount" },
+        "value": { "path": "/profile/projectCount" }
+      },
+      {
+        "id": "stat2_col",
+        "component": "Column",
+        "children": ["stat2"],
+        "flex": 1,
         "style": { "textAlign": "center" }
       },
       {
@@ -92,15 +104,20 @@
         "component": "Statistic",
         "title": "Rating",
         "value": { "path": "/profile/rating" },
-        "suffix": "/5.0",
+        "suffix": "/5.0"
+      },
+      {
+        "id": "stat3_col",
+        "component": "Column",
+        "children": ["stat3"],
+        "flex": 1,
         "style": { "textAlign": "center" }
       },
       {
         "id": "stat3",
         "component": "Statistic",
         "title": "Years",
-        "value": { "path": "/profile/years" },
-        "style": { "textAlign": "center" }
+        "value": { "path": "/profile/years" }
       },
       {
         "id": "tag_row",
