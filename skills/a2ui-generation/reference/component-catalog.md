@@ -58,6 +58,8 @@ Properties: `span` (1–24 grid), `offset`, `push`, `pull`, `order`, `flex`, `st
 
 Horizontal layout container (Ant Design `Row`).
 
+**Row + Column contract**: Row expects `Column` children for grid layout. Non-Column children are auto-wrapped with natural width (`flex="auto"`). For equal-width distribution across children, use explicit `Column` wrappers with `flex: 1`.
+
 ```json
 {"id": "row1", "component": "Row", "children": ["child1", "child2"], "justify": "start", "align": "top", "gutter": 16, "wrap": true, "style": {}}
 ```

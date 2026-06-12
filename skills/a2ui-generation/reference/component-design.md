@@ -55,6 +55,33 @@ General principles:
 - Content that naturally suits horizontal browsing can use wider layouts without overflow risk
 - Use `style.maxWidth` to constrain overly wide content on large screens
 
+## Row Equal Distribution Rule
+
+When multiple children in a Row should share **equal width** (e.g. 3 Statistic cards, 3 pricing tiers, 3 status indicators), wrap each child in a `Column` with `flex: 1`.
+
+The renderer auto-wraps non-Column children with `flex="auto"` (natural content width), which does NOT produce equal sizing. Explicit Column wrappers are required.
+
+```json
+// ✅ Correct: equal-width stats via Column wrappers
+{
+  "id": "stats_row",
+  "component": "Row",
+  "children": ["stat1_col", "stat2_col", "stat3_col"]
+},
+{ "id": "stat1_col", "component": "Column", "children": ["stat1"], "flex": 1, "style": { "textAlign": "center" } },
+{ "id": "stat1", "component": "Statistic", "title": "Projects", "value": { "path": "/data/count" } }
+
+// ❌ Wrong: direct children → natural width, NOT equal
+{
+  "id": "stats_row",
+  "component": "Row",
+  "children": ["stat1", "stat2", "stat3"],
+  "justify": "spaceAround"
+}
+```
+
+When children should keep **natural width** (e.g. Tag groups, Button + Text pairs with `justify: spaceBetween`), placing non-Column children directly in Row is correct — the renderer wraps them in `flex="auto"` which respects content size.
+
 ## Protected Column Readability
 
 A protected column must not just be "visible" — it must maintain minimum readable form.
