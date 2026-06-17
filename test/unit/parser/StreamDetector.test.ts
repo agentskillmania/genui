@@ -132,4 +132,62 @@ describe('StreamDetector', () => {
       expect(detector.detectStreamingContent('1234567890')).toBeNull();
     });
   });
+
+  // ---- Escape handling (\" \n \\ etc.) ----
+
+  describe('escape handling', () => {
+    it('should unescape \\n in streamed partial content', () => {
+      const detector = new StreamDetector();
+      // Text component, content contains an escaped newline, string still open
+      const pending = '{"surfaceId":"s1","component":"Text","text":"line1\\nline2';
+      const result = detector.detectStreamingContent(pending);
+      expect(result).not.toBeNull();
+      expect(result!.partialContent).toBe('line1\nline2');
+    });
+
+    it('should not truncate at an escaped quote \\" in streamed content', () => {
+      const detector = new StreamDetector();
+      // The value "say \"hi\"" must not be cut at the \"
+      const pending = '{"surfaceId":"s1","component":"Text","text":"say \\"hi\\" more';
+      const result = detector.detectStreamingContent(pending);
+      expect(result).not.toBeNull();
+      expect(result!.partialContent).toBe('say "hi" more');
+    });
+
+    it('should unescape backslash \\\\ in streamed content', () => {
+      const detector = new StreamDetector();
+      const pending = '{"surfaceId":"s1","component":"Text","text":"a\\\\b';
+      const result = detector.detectStreamingContent(pending);
+      expect(result).not.toBeNull();
+      expect(result!.partialContent).toBe('a\\b');
+    });
+
+    it('should drop a trailing lone backslash (incomplete escape) in open stream', () => {
+      const detector = new StreamDetector();
+      // Ends with a lone backslash — the escape sequence is incomplete
+      const pending = '{"surfaceId":"s1","component":"Text","text":"abc\\';
+      const result = detector.detectStreamingContent(pending);
+      expect(result).not.toBeNull();
+      expect(result!.partialContent).toBe('abc');
+    });
+
+    it('should unescape a value whose string just closed (ends with quote)', () => {
+      const detector = new StreamDetector();
+      // String value just closed with a quote at the buffer tail — the
+      // surrounding JSON object is still incomplete but the value is whole.
+      const pending = '{"surfaceId":"s1","component":"Text","text":"done\\n"';
+      const result = detector.detectStreamingContent(pending);
+      expect(result).not.toBeNull();
+      expect(result!.partialContent).toBe('done\n');
+    });
+
+    it('should extract surfaceId even when it contains an escaped quote', () => {
+      const detector = new StreamDetector();
+      // surfaceId value with escaped quote should be captured in full
+      const pending = '{"surfaceId":"s\\"1","component":"Text","text":"x';
+      const result = detector.detectStreamingContent(pending);
+      expect(result).not.toBeNull();
+      expect(result!.surfaceId).toBe('s"1');
+    });
+  });
 });

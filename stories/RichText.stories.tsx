@@ -20,7 +20,7 @@ export const FormattedRichText: RichTextStory = {
     id: 'rt-1',
     component: 'RichText',
     properties: {
-      text: [
+      content: [
         '<h2>Rich Text Content</h2>',
         '<p>This is a <strong>bold</strong> and <em>italic</em> paragraph.</p>',
         '<ul>',

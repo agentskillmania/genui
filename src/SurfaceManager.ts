@@ -88,6 +88,36 @@ export class SurfaceManager {
     this.parser.end();
   }
 
+  /**
+   * Handle a single complete A2UI message object.
+   *
+   * This is a convenience entry point for non-streaming input: instead of
+   * feeding raw text chunks, the caller passes a fully-formed A2UI message
+   * (e.g. `{ version, updateComponents: {...} }`). The message is serialized
+   * and run through the parser so it follows the exact same processing path
+   * as streamed input.
+   *
+   * Accepts either a JSON string or an already-parsed object.
+   */
+  handleMessage(message: string | Record<string, unknown>): void {
+    this.ensureNotDisposed();
+    const json = typeof message === 'string' ? message : JSON.stringify(message);
+    const results = this.parser.receiveChunk(json);
+    if (results.length > 0) {
+      this.processParseResults(results);
+    }
+  }
+
+  /**
+   * Feed a raw text chunk from an LLM stream into the parser.
+   *
+   * Alias for {@link receiveTextChunk}. The parser auto-detects JSON
+   * boundaries and emits complete messages as they arrive.
+   */
+  handleChunk(chunk: string): void {
+    this.receiveTextChunk(chunk);
+  }
+
   // ---------------------------------------------------------------------------
   // Interaction — delegate to engine
   // ---------------------------------------------------------------------------
@@ -137,6 +167,15 @@ export class SurfaceManager {
    */
   getEngine(): SurfaceEngine {
     return this.engine;
+  }
+
+  /**
+   * Set the function resolver used to evaluate `{ call, args }` data bindings
+   * during property resolution. Applied to all subsequently created surfaces.
+   * Pass null/undefined to clear.
+   */
+  setFunctionResolver(resolver: ((name: string) => unknown) | null): void {
+    this.engine.setFunctionResolver(resolver as Parameters<typeof this.engine.setFunctionResolver>[0]);
   }
 
   // ---------------------------------------------------------------------------

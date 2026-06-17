@@ -33,7 +33,7 @@ describe('RichText component', () => {
 
   it('renders HTML content via dangerouslySetInnerHTML', () => {
     const html = '<p>Hello <strong>World</strong></p>';
-    const { container } = render(<RichText {...makeProps({ text: html })} />);
+    const { container } = render(<RichText {...makeProps({ content: html })} />);
     // The HTML should be rendered as real DOM elements
     const strongEl = container.querySelector('strong');
     expect(strongEl).toBeTruthy();
@@ -41,12 +41,12 @@ describe('RichText component', () => {
   });
 
   it('renders plain text content', () => {
-    render(<RichText {...makeProps({ text: 'Just text' })} />);
+    render(<RichText {...makeProps({ content: 'Just text' })} />);
     expect(screen.getByText('Just text')).toBeTruthy();
   });
 
-  it('renders empty content when text is empty string', () => {
-    const { container } = render(<RichText {...makeProps({ text: '' })} />);
+  it('renders empty content when content is empty string', () => {
+    const { container } = render(<RichText {...makeProps({ content: '' })} />);
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toBeTruthy();
     expect(wrapper.innerHTML).toBe('');
@@ -54,13 +54,13 @@ describe('RichText component', () => {
 
   it('renders complex HTML with nested elements', () => {
     const html = '<ul><li>Item 1</li><li>Item 2</li></ul>';
-    const { container } = render(<RichText {...makeProps({ text: html })} />);
+    const { container } = render(<RichText {...makeProps({ content: html })} />);
     const listItems = container.querySelectorAll('li');
     expect(listItems.length).toBe(2);
   });
 
   it('renders within a Typography element', () => {
-    const { container } = render(<RichText {...makeProps({ text: 'test' })} />);
+    const { container } = render(<RichText {...makeProps({ content: 'test' })} />);
     const wrapper = container.firstChild as HTMLElement;
     // Ant Design Typography renders an article element
     expect(wrapper.tagName.toLowerCase()).toBe('article');

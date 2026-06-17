@@ -20,7 +20,7 @@ export const BasicMarkdown: MarkdownStory = {
     id: 'md-1',
     component: 'Markdown',
     properties: {
-      text: [
+      content: [
         '# GenUI Markdown',
         '',
         'This is a **markdown** component that renders _formatted_ text.',
@@ -45,7 +45,7 @@ export const CodeBlock: MarkdownStory = {
     id: 'md-2',
     component: 'Markdown',
     properties: {
-      text: [
+      content: [
         '### Example Code',
         '',
         '```javascript',

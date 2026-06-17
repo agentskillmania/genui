@@ -679,4 +679,68 @@ describe('SurfaceManager', () => {
       expect(cap.events).toHaveLength(0);
     });
   });
+
+  // handleMessage / handleChunk —— README 示例使用的便捷入口，
+  // 与 receiveTextStream 系列走同一条解析路径。
+  describe('handleMessage / handleChunk aliases', () => {
+    it('handleMessage accepts a complete A2UI object and routes it like a stream chunk', () => {
+      const cap = captureEvents(manager);
+
+      manager.handleMessage({
+        version: 'v0.9',
+        createSurface: { surfaceId: 's1', catalogId: 'cat1' },
+      });
+
+      const event = cap.find('createSurface');
+      expect(event).toBeDefined();
+      expect(event?.surfaceId).toBe('s1');
+    });
+
+    it('handleMessage also accepts a JSON string', () => {
+      const cap = captureEvents(manager);
+
+      manager.handleMessage(CREATE_SURFACE('s2', 'cat2'));
+
+      const event = cap.find('createSurface');
+      expect(event).toBeDefined();
+      expect(event?.surfaceId).toBe('s2');
+    });
+
+    it('handleChunk feeds raw stream text through the parser (alias for receiveTextChunk)', () => {
+      const cap = captureEvents(manager);
+
+      manager.handleChunk(CREATE_SURFACE('s3'));
+
+      const event = cap.find('createSurface');
+      expect(event).toBeDefined();
+      expect(event?.surfaceId).toBe('s3');
+    });
+
+    it('handleMessage processes UpdateComponents end-to-end', () => {
+      const cap = captureEvents(manager);
+
+      // surface must exist before UpdateComponents will emit
+      manager.handleMessage({
+        version: 'v0.9',
+        createSurface: { surfaceId: 's4', catalogId: 'cat1' },
+      });
+      manager.handleMessage({
+        version: 'v0.9',
+        updateComponents: {
+          surfaceId: 's4',
+          components: [{ id: 'c1', component: 'Text', text: 'hello' }],
+        },
+      });
+
+      const event = cap.find('updateComponents');
+      expect(event).toBeDefined();
+      expect(event?.surfaceId).toBe('s4');
+    });
+
+    it('should throw if handleMessage called after dispose', () => {
+      manager.destroy();
+      expect(() => manager.handleMessage({ version: 'v0.9' })).toThrow('disposed');
+      expect(() => manager.handleChunk('{}')).toThrow('disposed');
+    });
+  });
 });

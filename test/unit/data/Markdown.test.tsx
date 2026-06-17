@@ -32,41 +32,48 @@ describe('Markdown component', () => {
   });
 
   it('renders plain text content', () => {
-    render(<Markdown {...makeProps({ text: 'Hello World' })} />);
+    render(<Markdown {...makeProps({ content: 'Hello World' })} />);
     expect(screen.getByText('Hello World')).toBeTruthy();
   });
 
   it('renders markdown bold syntax as strong text', () => {
-    render(<Markdown {...makeProps({ text: '**bold**' })} />);
+    render(<Markdown {...makeProps({ content: '**bold**' })} />);
     const strong = screen.getByText('bold');
     expect(strong).toBeTruthy();
     expect(strong.tagName.toLowerCase()).toBe('strong');
   });
 
   it('renders markdown italic syntax as emphasized text', () => {
-    render(<Markdown {...makeProps({ text: '*italic*' })} />);
+    render(<Markdown {...makeProps({ content: '*italic*' })} />);
     const em = screen.getByText('italic');
     expect(em).toBeTruthy();
     expect(em.tagName.toLowerCase()).toBe('em');
   });
 
   it('renders markdown heading syntax', () => {
-    render(<Markdown {...makeProps({ text: '# Heading 1' })} />);
+    render(<Markdown {...makeProps({ content: '# Heading 1' })} />);
     const heading = screen.getByText('Heading 1');
     expect(heading).toBeTruthy();
     expect(heading.tagName.toLowerCase()).toBe('h1');
   });
 
-  it('renders empty content when text is empty string', () => {
-    const { container } = render(<Markdown {...makeProps({ text: '' })} />);
+  it('renders empty content when content is empty string', () => {
+    const { container } = render(<Markdown {...makeProps({ content: '' })} />);
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper).toBeTruthy();
     expect(wrapper.innerHTML).toBe('');
   });
 
   it('renders a wrapper div container', () => {
-    const { container } = render(<Markdown {...makeProps({ text: 'content' })} />);
+    const { container } = render(<Markdown {...makeProps({ content: 'content' })} />);
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.tagName.toLowerCase()).toBe('div');
+  });
+
+  // 流式渲染链路对齐：MarkdownPlugin 下发的字段是 `content`，组件必须读 `content`。
+  // 历史上组件读 `text` 导致流式 Markdown 内容为空，此测试防止回归。
+  it('renders content delivered by the streaming MarkdownPlugin (field name `content`)', () => {
+    render(<Markdown {...makeProps({ content: 'Streamed **markdown**' })} />);
+    expect(screen.getByText('markdown')).toBeTruthy();
   });
 });

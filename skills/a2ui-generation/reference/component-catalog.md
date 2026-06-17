@@ -398,20 +398,20 @@ Properties: `columns` (array of `{title, dataIndex, key, ...}`), `dataSource`, `
 HTML content renderer (via `dangerouslySetInnerHTML`).
 
 ```json
-{"id": "rt1", "component": "RichText", "text": {"path": "/data/html"}, "style": {}}
+{"id": "rt1", "component": "RichText", "content": {"path": "/data/html"}, "style": {}}
 ```
 
-Properties: `text` (HTML string), `style`
+Properties: `content` (HTML string), `style`
 
 ### `Markdown`
 
 Markdown renderer (react-markdown).
 
 ```json
-{"id": "md1", "component": "Markdown", "text": {"path": "/data/md"}, "style": {}}
+{"id": "md1", "component": "Markdown", "content": {"path": "/data/md"}, "style": {}}
 ```
 
-Properties: `text` (Markdown string), `style`
+Properties: `content` (Markdown string), `style`
 
 ### `Avatar`
 

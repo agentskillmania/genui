@@ -53,11 +53,34 @@ export class StreamDetector {
 
   /**
    * Extract a top-level string field value from the pending JSON.
+   *
+   * Uses a regex that recognizes backslash escapes (e.g. `\"`) so that string
+   * values containing escaped quotes are captured in full instead of being
+   * truncated at the first `\"`.
    */
   private extractFieldValue(json: string, fieldName: string): string | null {
-    const regex = new RegExp(`"${fieldName}"\\s*:\\s*"([^"]*)"`, 's');
+    // Match: "field"<ws>:<ws>"<value with escaped chars>"
+    // Group 1 captures the raw (still-escaped) JSON string body.
+    const regex = new RegExp(`"${fieldName}"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"`, 's');
     const match = regex.exec(json);
-    return match ? match[1] : null;
+    return match ? this.unescapeJsonString(match[1]) : null;
+  }
+
+  /**
+   * Unescape a raw JSON string body (the text between the surrounding quotes)
+   * into its real character sequence. Handles `\"`, `\\`, `\/`, `\n`, `\t`,
+   * `\r`, `\b`, `\f` and `\uXXXX`.
+   *
+   * Implementation wraps the body in quotes and parses via JSON.parse, which
+   * is the cheapest correct approach. Falls back to the raw input on failure
+   * (e.g. truncated escape at buffer tail).
+   */
+  private unescapeJsonString(raw: string): string {
+    try {
+      return JSON.parse(`"${raw}"`) as string;
+    } catch {
+      return raw;
+    }
   }
 
   /**
@@ -124,17 +147,75 @@ export class StreamDetector {
 
     // Extract everything after the opening quote until end of buffer
     // This is the partial content being streamed
-    const partial = pendingJson.substring(lastMatchIndex);
+    let partial = pendingJson.substring(lastMatchIndex);
 
     // If the partial content ends with a closing quote (complete value),
     // check if it's truly the end or if there's more structure
+    let closed = false;
     if (partial.endsWith('"')) {
       // The string value is actually complete — not streaming
       // But we still return the content minus the closing quote for
       // partial rendering scenarios where the overall JSON is incomplete
-      return partial.slice(0, -1);
+      partial = partial.slice(0, -1);
+      closed = true;
     }
 
-    return partial;
+    // Unescape JSON string escapes (\n, \", \\, \t, ...) so the rendered
+    // partial content matches what the final value will look like.
+    // For still-streaming (unclosed) values, a trailing lone backslash is
+    // dropped because the escape sequence is incomplete.
+    return this.unescapePartialJsonString(partial, closed);
+  }
+
+  /**
+   * Unescape the body of a (possibly still-streaming) JSON string.
+   *
+   * Unlike {@link unescapeJsonString}, this handles values whose closing
+   * quote has not arrived yet: a trailing lone `\` (start of an incomplete
+   * escape) is stripped instead of throwing.
+   */
+  private unescapePartialJsonString(raw: string, closed: boolean): string {
+    if (closed) {
+      // Full closed value — safe to round-trip through JSON.parse.
+      try {
+        return JSON.parse(`"${raw}"`) as string;
+      } catch {
+        // fall through to manual unescape
+      }
+    }
+    // Manual unescape that tolerates a trailing incomplete escape.
+    let out = '';
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (ch === '\\' && i + 1 < raw.length) {
+        const next = raw[++i];
+        switch (next) {
+          case '"': out += '"'; break;
+          case '\\': out += '\\'; break;
+          case '/': out += '/'; break;
+          case 'n': out += '\n'; break;
+          case 't': out += '\t'; break;
+          case 'r': out += '\r'; break;
+          case 'b': out += '\b'; break;
+          case 'f': out += '\f'; break;
+          case 'u': {
+            const hex = raw.slice(i + 1, i + 5);
+            if (/^[0-9a-fA-F]{4}$/.test(hex)) {
+              out += String.fromCharCode(parseInt(hex, 16));
+              i += 4;
+            } else {
+              out += next;
+            }
+            break;
+          }
+          default: out += next;
+        }
+      } else if (ch === '\\') {
+        // trailing lone backslash — incomplete escape, drop it
+      } else {
+        out += ch;
+      }
+    }
+    return out;
   }
 }
