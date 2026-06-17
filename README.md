@@ -11,7 +11,7 @@ GenUI 接收 A2UI 协议消息（JSON），将其渲染为实时 React 组件。
 引擎负责：
 
 - **流式解析** —— 累积 LLM 输出的部分 JSON，检测消息边界，发射完整 A2UI 消息
-- **数据绑定** —— 基于 `{ "path": "/pointer" }` 语法解析实时数据模型
+- **数据绑定** —— 基于 `{ "path": "/pointer" }` 语法解析实时数据模型，或通过 `{ "call": "...", "args": {...} }` 调用宿主注册的函数
 - **组件渲染** —— 将 A2UI 组件类型映射为 Ant Design / ECharts React 组件
 - **Surface 管理** —— 多个独立 UI Surface，各自拥有组件树和数据模型
 
@@ -39,15 +39,19 @@ GenUI 接收 A2UI 协议消息（JSON），将其渲染为实时 React 组件。
 npm install @agentskillmania/genui
 ```
 
-Peer 依赖：`react` >= 18、`react-dom` >= 18。
+Peer 依赖：`react` ^18 || ^19、`react-dom` ^18 || ^19。
 
 ### 基本用法
 
 ```tsx
-import { GenUISurface, useGenui } from '@agentskillmania/genui';
+import { GenUISurface, useGenui, useSurfaceManager } from '@agentskillmania/genui';
 
 function MyApp() {
-  const { surfaceManager } = useGenui();
+  // useGenui 初始化引擎，useSurfaceManager 创建并管理 SurfaceManager
+  useGenui();
+  const { surfaceManager } = useSurfaceManager();
+
+  if (!surfaceManager) return null;
 
   // 注入 A2UI 消息（来自 LLM 流、API 等）
   surfaceManager.handleMessage({
@@ -71,20 +75,21 @@ function MyApp() {
     },
   });
 
-  return <GenUISurface surfaceId="demo" surfaceManager={surfaceManager} />;
+  return <GenUISurface surfaceManager={surfaceManager} />;
 }
 ```
 
 ### 流式输入
 
 ```tsx
-import { GenUISurface, useGenui } from '@agentskillmania/genui';
+import { GenUISurface, useSurfaceManager } from '@agentskillmania/genui';
 
 function StreamingDemo() {
-  const { surfaceManager } = useGenui();
+  const { surfaceManager } = useSurfaceManager();
 
   // 注入 LLM 原始输出片段 —— 解析器自动检测 JSON 边界并发射完整消息
   async function handleStream(response: Response) {
+    if (!surfaceManager) return;
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
 
@@ -97,7 +102,7 @@ function StreamingDemo() {
     }
   }
 
-  return <GenUISurface surfaceId="my_surface" surfaceManager={surfaceManager} />;
+  return surfaceManager ? <GenUISurface surfaceManager={surfaceManager} /> : null;
 }
 ```
 

@@ -11,7 +11,7 @@ GenUI takes A2UI protocol messages (JSON) and renders them as live React compone
 The engine handles:
 
 - **Stream parsing** — accumulate partial JSON from LLM output, detect message boundaries, emit complete A2UI messages
-- **Data binding** — resolve `{ "path": "/pointer" }` bindings against a live data model
+- **Data binding** — resolve `{ "path": "/pointer" }` bindings against a live data model, or invoke host-registered functions via `{ "call": "...", "args": {...} }`
 - **Component rendering** — map A2UI component types to Ant Design / ECharts React components
 - **Surface management** — multiple independent UI surfaces, each with its own component tree and data model
 
@@ -39,15 +39,19 @@ The engine handles:
 npm install @agentskillmania/genui
 ```
 
-Peer dependencies: `react` >= 18, `react-dom` >= 18.
+Peer dependencies: `react` ^18 || ^19, `react-dom` ^18 || ^19.
 
 ### Basic Usage
 
 ```tsx
-import { GenUISurface, useGenui } from '@agentskillmania/genui';
+import { GenUISurface, useGenui, useSurfaceManager } from '@agentskillmania/genui';
 
 function MyApp() {
-  const { surfaceManager } = useGenui();
+  // useGenui initializes the engine, useSurfaceManager creates and manages the SurfaceManager
+  useGenui();
+  const { surfaceManager } = useSurfaceManager();
+
+  if (!surfaceManager) return null;
 
   // Feed A2UI messages (from LLM stream, API, etc.)
   surfaceManager.handleMessage({
@@ -71,20 +75,21 @@ function MyApp() {
     },
   });
 
-  return <GenUISurface surfaceId="demo" surfaceManager={surfaceManager} />;
+  return <GenUISurface surfaceManager={surfaceManager} />;
 }
 ```
 
 ### Streaming
 
 ```tsx
-import { GenUISurface, useGenui } from '@agentskillmania/genui';
+import { GenUISurface, useSurfaceManager } from '@agentskillmania/genui';
 
 function StreamingDemo() {
-  const { surfaceManager } = useGenui();
+  const { surfaceManager } = useSurfaceManager();
 
   // Feed raw LLM output chunks — the parser handles JSON detection and message boundaries
   async function handleStream(response: Response) {
+    if (!surfaceManager) return;
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
 
@@ -97,7 +102,7 @@ function StreamingDemo() {
     }
   }
 
-  return <GenUISurface surfaceId="my_surface" surfaceManager={surfaceManager} />;
+  return surfaceManager ? <GenUISurface surfaceManager={surfaceManager} /> : null;
 }
 ```
 
