@@ -4,7 +4,8 @@ validate_a2ui.py — GenUI variant
 
 Validate an A2UI components/dataModel pair for GenUI (React + Ant Design 6).
 
-Adapted from AGenUI's validate_a2ui.py with the following changes:
+Historically derived from an earlier AGenUI validator; GenUI ships its own.
+Key changes:
 - Component allowlist expanded to 62 components
 - Style validation uses camelCase CSS properties (web standard)
 - Component enums match GenUI's actual property values
@@ -194,7 +195,7 @@ COMPONENT_REQUIRED_FIELDS: dict[str, list[str]] = {
     "AudioPlayer": ["url"],
     "Web":        ["url"],
     "QRCode":     ["value"],
-    "Markdown":   ["text"],
+    "Markdown":   ["content"],
 }
 
 # Ant Design icon naming convention: PascalCase with Outlined/Filled/TwoTone suffix

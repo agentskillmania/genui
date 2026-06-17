@@ -162,6 +162,7 @@ To save tokens:
 - **Component allowlist**: Only use component names defined in [`reference/component-catalog.md`](reference/component-catalog.md).
   Do NOT invent, translate, or import names from other UI frameworks.
 - **Template components must use relative paths**: all `{"path": "..."}` bindings inside a template component must be relative paths (e.g. `text`, `userName`, `author/name`). Absolute paths such as `/children/xxx` are forbidden.
+- **Function call bindings are host-only**: `{"call": "name", "args": {...}}` resolves to a handler registered by the host via `Genui.registerFunction`. The generated A2UI JSON may reference a call name, but the handler implementation is the host's responsibility. See [`reference/data-binding.md`](reference/data-binding.md#function-call-binding).
 
 ## Resources
 

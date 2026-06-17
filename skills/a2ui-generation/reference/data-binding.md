@@ -81,6 +81,33 @@ Rules:
 - `path` must not use dot notation
 - `value` must be semantically consistent with `path`
 
+## Function Call Binding
+
+Beyond path bindings, any property value can invoke a registered function and
+bind to its return value using the `{"call": ..., "args": ...}` shape:
+
+```json
+{"id": "t1", "component": "Text", "text": {"call": "formatPrice", "args": {"amount": 99.5}}}
+```
+
+Rules:
+
+- `call` must be a name registered via `Genui.registerFunction(name, handler)`
+  on the host before the surface renders it
+- Only **synchronous** handlers are supported in binding resolution — the
+  handler receives `args` and returns a value directly. Async handlers
+  (those accepting a callback) emit a `console.warn` and resolve to `undefined`
+- `args` itself is resolved recursively, so it may contain path bindings:
+
+```json
+{"text": {"call": "upper", "args": {"input": {"path": "/user/name"}}}}
+```
+
+- If no resolver is configured or the handler is missing, the binding resolves
+  to `undefined` and a warning is logged — it never throws
+- Function call bindings are an advanced/host-integration feature; the A2UI
+  JSON stays fully declarative, the host owns the handler implementations
+
 ## Binding Reminders
 
 - Design the component tree first, then map data — do not hard-code values into components

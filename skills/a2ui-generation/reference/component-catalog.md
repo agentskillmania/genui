@@ -381,7 +381,7 @@ Properties: `value`, `disabled`, `showText`, `size`, `allowClear`, `style`
 
 ---
 
-## Data Components (9)
+## Data Components (10)
 
 ### `Table`
 
