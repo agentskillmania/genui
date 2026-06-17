@@ -11,13 +11,9 @@ export { SurfaceManager } from './SurfaceManager';
 
 // ===== React component =====
 export { GenUISurface } from './components/Surface';
-/** @deprecated Use GenUISurface */
-export { GenUISurface as AGenUISurface } from './components/Surface';
 
 // ===== React hooks =====
 export { useGenui } from './hooks/useGenui';
-/** @deprecated Use useGenui */
-export { useGenui as useAGenUI } from './hooks/useGenui';
 export { useSurfaceManager } from './hooks/useSurfaceManager';
 export { useActionHandler } from './hooks/useActionHandler';
 
@@ -36,7 +32,6 @@ export { exportCatalog } from './tools/catalogExport';
 // ===== Types =====
 export type {
   GenuiConfig,
-  AGenUIConfig,
   AGenUIComponent,
   AGenUISurfaceState,
   ActionEvent,
@@ -51,7 +46,6 @@ export type {
 
 export type {
   GenUIComponentProps,
-  AGenUIComponentProps,
   ComponentRenderer,
 } from './components/types';
 

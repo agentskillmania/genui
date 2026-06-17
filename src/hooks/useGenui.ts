@@ -45,6 +45,3 @@ export function useGenui(): UseGenuiResult {
 
   return { initialized, loading, error, initialize };
 }
-
-/** @deprecated Use useGenui */
-export { useGenui as useAGenUI };

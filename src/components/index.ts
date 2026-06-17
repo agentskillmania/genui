@@ -174,4 +174,4 @@ if (typeof window !== 'undefined') {
 
 // Re-exports
 export { registerComponent, getComponentRenderer, hasComponent, getRegisteredTypes } from './registry';
-export type { GenUIComponentProps, AGenUIComponentProps, ComponentRenderer } from './types';
+export type { GenUIComponentProps, ComponentRenderer } from './types';

@@ -131,9 +131,6 @@ export interface GenuiConfig {
   componentStyles?: Record<string, unknown>;
 }
 
-/** @deprecated Use GenuiConfig */
-export type AGenUIConfig = GenuiConfig;
-
 // ===== Function handlers =====
 
 export type SyncFunctionHandler = (params: Record<string, unknown>) => unknown;

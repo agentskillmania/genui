@@ -3,7 +3,7 @@
  * Renders the full A2UI component tree for all active surfaces.
  */
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import { ConfigProvider, theme as antdTheme } from 'antd';
 import type { SurfaceManager } from '../SurfaceManager';
 import type { SurfaceEvent } from '../engine/types';
@@ -20,13 +20,60 @@ export interface GenUISurfaceProps {
   className?: string;
 }
 
-/** @deprecated Use GenUISurfaceProps */
-export type AGenUISurfaceProps = GenUISurfaceProps;
-
 interface SurfaceState {
   surfaceId: string;
   components: AGenUIComponent[];
 }
+
+/**
+ * Props for a single memoized component node in the rendered tree.
+ *
+ * `onAction` is keyed by component id so each node receives a stable callback
+ * reference — this is what lets React.memo skip re-renders for siblings whose
+ * resolved props/children did not change.
+ */
+interface SurfaceComponentNodeProps {
+  surfaceId: string;
+  comp: AGenUIComponent;
+  /** Snapshot of this node's children (already resolved from the engine). */
+  childrenComps: AGenUIComponent[];
+  /** Resolved properties (data bindings already substituted). */
+  resolvedProperties: Record<string, unknown>;
+  childTypes: string[];
+  onAction: (action: string, context?: Record<string, unknown>) => void;
+  renderChild: (surfaceId: string, comp: AGenUIComponent) => React.ReactNode;
+}
+
+/**
+ * Memoized renderer for a single component node.
+ *
+ * Skips re-render when `resolvedProperties`, `childrenComps`, `childTypes`,
+ * `comp`, `onAction`, or `renderChild` are referentially unchanged — which is
+ * the common case when only one surface's data model changed.
+ */
+const SurfaceComponentNode = memo<SurfaceComponentNodeProps>(
+  ({ comp, childrenComps, resolvedProperties, childTypes, onAction, renderChild, surfaceId }) => {
+    const renderer = getComponentRenderer(comp.component);
+    if (!renderer) {
+      console.warn(`[GenUI] Unknown component type: ${comp.component}`);
+      return null;
+    }
+
+    return (
+      <React.Fragment key={comp.id}>
+        {React.createElement(renderer, {
+          id: comp.id,
+          component: comp.component,
+          properties: resolvedProperties,
+          children: childrenComps.map((childComp) => renderChild(surfaceId, childComp)),
+          childTypes,
+          onAction,
+        })}
+      </React.Fragment>
+    );
+  },
+);
+SurfaceComponentNode.displayName = 'SurfaceComponentNode';
 
 export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   surfaceManager,
@@ -124,42 +171,53 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
     [surfaceManager],
   );
 
+  // Cache of per-component-id action callbacks. Each node gets a stable
+  // callback keyed by its id, so React.memo can skip unchanged siblings.
+  const actionCallbackCache = React.useRef<Map<string, (action: string, context?: Record<string, unknown>) => void>>(new Map());
+
+  const getActionCallback = useCallback(
+    (surfaceId: string, componentId: string) => {
+      const cacheKey = `${surfaceId}:${componentId}`;
+      let cb = actionCallbackCache.current.get(cacheKey);
+      if (!cb) {
+        cb = (action: string, context?: Record<string, unknown>) =>
+          handleComponentAction(surfaceId, componentId, action, context);
+        actionCallbackCache.current.set(cacheKey, cb);
+      }
+      return cb;
+    },
+    [handleComponentAction],
+  );
+
   const renderComponent = useCallback(
     (surfaceId: string, comp: AGenUIComponent): React.ReactNode => {
-      const renderer = getComponentRenderer(comp.component);
-      if (!renderer) {
-        console.warn(`[GenUI] Unknown component type: ${comp.component}`);
-        return null;
-      }
-
-      const { id, component, child, children, action, checks, ...properties } = comp;
+      const { id, child, children, action, checks, ...properties } = comp;
       const engine = surfaceManager.getEngine();
       const surface = engine.getSurface(surfaceId);
       const childComponents = surface?.getChildren(id) || [];
 
-      // Resolve A2UI v0.9 { "path": "..." } data bindings in component properties
+      // Resolve A2UI v0.9 data bindings in component properties
       const resolvedProps = engine.resolveProperties(
         surfaceId,
         properties,
       ) as Record<string, unknown>;
 
-      // Pass child component types so layout renderers can adapt
       const childTypes = childComponents.map((c) => c.component);
 
       return (
-        <React.Fragment key={id}>
-          {React.createElement(renderer, {
-            id,
-            component,
-            properties: resolvedProps,
-            children: childComponents.map((childComp) => renderComponent(surfaceId, childComp)),
-            childTypes,
-            onAction: (_action, context) => handleComponentAction(surfaceId, id, _action, context),
-          })}
-        </React.Fragment>
+        <SurfaceComponentNode
+          key={id}
+          surfaceId={surfaceId}
+          comp={comp}
+          childrenComps={childComponents}
+          resolvedProperties={resolvedProps}
+          childTypes={childTypes}
+          onAction={getActionCallback(surfaceId, id)}
+          renderChild={renderComponent}
+        />
       );
     },
-    [surfaceManager, handleComponentAction],
+    [surfaceManager, getActionCallback],
   );
 
   const containerStyle: React.CSSProperties = {
@@ -190,6 +248,3 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
 };
 
 GenUISurface.displayName = 'GenUISurface';
-
-/** @deprecated Use GenUISurface */
-export const AGenUISurface = GenUISurface;
