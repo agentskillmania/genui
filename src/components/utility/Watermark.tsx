@@ -11,8 +11,10 @@ export const Watermark: React.FC<GenUIComponentProps> = ({ properties, children 
   return (
     <AntWatermark
       content={content as string | string[]}
-      fontColor={fontColor as string}
-      fontSize={fontSize as number}
+      font={{
+        color: fontColor as string,
+        fontSize: fontSize as number,
+      }}
       gap={gap as [number, number]}
       rotate={rotate as number}
       style={style as React.CSSProperties}

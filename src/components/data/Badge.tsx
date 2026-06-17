@@ -7,7 +7,7 @@ import type { GenUIComponentProps } from '../types';
  * Wraps children as the badge target.
  */
 export const Badge: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { count, dot, status, color, text, overflow, style } = properties ?? {};
+  const { count, dot, status, color, text, overflowCount, style } = properties ?? {};
 
   return (
     <AntBadge
@@ -16,7 +16,7 @@ export const Badge: React.FC<GenUIComponentProps> = ({ properties, children }) =
       status={status as 'success' | 'processing' | 'default' | 'error' | 'warning'}
       color={color as string}
       text={text as React.ReactNode}
-      overflow={overflow as number}
+      overflowCount={overflowCount as number}
       style={style as React.CSSProperties}
     >
       {children}

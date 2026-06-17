@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Pagination as AntPagination } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Pagination component — page navigator with change callback.
- * Syncs current page and page size back to the host via onSyncState.
+ *
+ * Fully controlled: current page and page size come from `properties` and
+ * every change is reported upstream via `onSyncState({ page, pageSize })`.
  */
 export const Pagination: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -18,36 +20,19 @@ export const Pagination: React.FC<GenUIComponentProps> = ({ properties, onSyncSt
     style,
   } = properties ?? {};
 
-  const [localCurrent, setLocalCurrent] = useState((current as number) ?? 1);
-  const [localPageSize, setLocalPageSize] = useState((pageSize as number) ?? 10);
-
-  useEffect(() => {
-    if (current !== undefined) {
-      setLocalCurrent(current as number);
-    }
-  }, [current]);
-
-  useEffect(() => {
-    if (pageSize !== undefined) {
-      setLocalPageSize(pageSize as number);
-    }
-  }, [pageSize]);
-
   const handleChange = (page: number, newPageSize: number) => {
-    setLocalCurrent(page);
-    setLocalPageSize(newPageSize);
     onSyncState?.({ page, pageSize: newPageSize });
   };
 
   return (
     <AntPagination
-      current={localCurrent}
+      current={(current as number) ?? 1}
       total={(total as number) ?? 0}
-      pageSize={localPageSize}
+      pageSize={(pageSize as number) ?? 10}
       showSizeChanger={showSizeChanger as boolean}
       showQuickJumper={showQuickJumper as boolean}
-      showTotal={showTotal as boolean}
-      size={size as 'default' | 'small'}
+      showTotal={showTotal ? (t: number, range: [number, number]) => `${range[0]}-${range[1]} of ${t} items` : undefined}
+      size={size === 'small' ? 'small' : undefined}
       style={style as React.CSSProperties}
       onChange={handleChange}
     />

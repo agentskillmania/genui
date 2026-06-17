@@ -17,7 +17,4 @@ export interface GenUIComponentProps {
   onSyncState?: (change: Record<string, unknown>) => void;
 }
 
-/** @deprecated Use GenUIComponentProps */
-export type AGenUIComponentProps = GenUIComponentProps;
-
-export type ComponentRenderer = (props: GenUIComponentProps) => ReactNode;
+export type ComponentRenderer = React.FC<GenUIComponentProps>;
