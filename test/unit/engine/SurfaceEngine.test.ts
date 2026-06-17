@@ -252,6 +252,46 @@ describe('SurfaceEngine – data model', () => {
     const surface = engine.getSurface('s1')!;
     expect(surface.resolveProperties({ path: '/does/not/exist' })).toBeUndefined();
   });
+
+  // ---------- RFC 6901 pointer escapes (~0 / ~1) ----------
+
+  it('updateDataModel decodes ~1 as "/" in segment names', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    const surface = engine.getSurface('s1')!;
+    // key literally containing a slash: /a/b~1c → segments ['a', 'b/c']
+    surface.updateDataModel('/a/b~1c', 'slashKey');
+    expect(surface.resolveProperties({ path: '/a/b~1c' })).toBe('slashKey');
+  });
+
+  it('updateDataModel decodes ~0 as "~" in segment names', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    const surface = engine.getSurface('s1')!;
+    // key literally containing a tilde: /a/b~0c → segments ['a', 'b~c']
+    surface.updateDataModel('/a/b~0c', 'tildeKey');
+    expect(surface.resolveProperties({ path: '/a/b~0c' })).toBe('tildeKey');
+  });
+
+  it('updateDataModel decodes ~01 as "~1" (order: ~1 before ~0)', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    const surface = engine.getSurface('s1')!;
+    // /x/~01 → segment '~1' (not '/')
+    surface.updateDataModel('/x/~01', 'ordered');
+    expect(surface.resolveProperties({ path: '/x/~01' })).toBe('ordered');
+    // negative: /x/~1 would be a different (non-existent) key
+    expect(surface.resolveProperties({ path: '/x/~1' })).toBeUndefined();
+  });
+
+  it('appendDataModel respects ~0/~1 escapes', () => {
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    const surface = engine.getSurface('s1')!;
+    surface.appendDataModel('/log~1entry', 'hello ');
+    surface.appendDataModel('/log~1entry', 'world');
+    expect(surface.resolveProperties({ path: '/log~1entry' })).toBe('hello world');
+  });
 });
 
 // ---------- Events ----------
@@ -509,5 +549,85 @@ describe('SurfaceEngine – resolveProperties', () => {
     engine.createSurface('s1', 'c1', {});
     const input = { path: 123, other: 'value' };
     expect(engine.resolveProperties('s1', input)).toEqual({ path: 123, other: 'value' });
+  });
+
+  // ---- A2UI v0.9 { "call": "...", "args": {...} } FunctionCall binding ----
+
+  it('resolves a { call, args } binding via a registered sync handler', () => {
+    const engine = new SurfaceEngine();
+    engine.setFunctionResolver((name) => {
+      if (name === 'greet') return (args: Record<string, unknown>) => `Hello, ${args.name}`;
+      return undefined;
+    });
+    engine.createSurface('s1', 'c1', {});
+    const result = engine.resolveProperties('s1', { call: 'greet', args: { name: 'World' } });
+    expect(result).toBe('Hello, World');
+  });
+
+  it('resolves args that themselves contain { path } bindings', () => {
+    const engine = new SurfaceEngine();
+    engine.setFunctionResolver((name) => {
+      if (name === 'upper') return (args: Record<string, unknown>) => String(args.text).toUpperCase();
+      return undefined;
+    });
+    engine.createSurface('s1', 'c1', {});
+    engine.updateDataModel('s1', '/user', { name: 'alice' });
+    const result = engine.resolveProperties('s1', {
+      call: 'upper',
+      args: { text: { path: '/user/name' } },
+    });
+    expect(result).toBe('ALICE');
+  });
+
+  it('resolves { call } binding nested inside a regular object', () => {
+    const engine = new SurfaceEngine();
+    engine.setFunctionResolver((name) => {
+      if (name === 'now') return () => '2024-01-01';
+      return undefined;
+    });
+    engine.createSurface('s1', 'c1', {});
+    const result = engine.resolveProperties('s1', {
+      label: 'Today',
+      value: { call: 'now' },
+    });
+    expect(result).toEqual({ label: 'Today', value: '2024-01-01' });
+  });
+
+  it('returns undefined and warns when no resolver is set', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const engine = new SurfaceEngine();
+    engine.createSurface('s1', 'c1', {});
+    const result = engine.resolveProperties('s1', { call: 'missing' });
+    expect(result).toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('returns undefined and warns when handler is not registered', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const engine = new SurfaceEngine();
+    engine.setFunctionResolver(() => undefined);
+    engine.createSurface('s1', 'c1', {});
+    const result = engine.resolveProperties('s1', { call: 'nope' });
+    expect(result).toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('warns and returns undefined for async handlers (arity >= 2)', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const engine = new SurfaceEngine();
+    engine.setFunctionResolver((name) => {
+      if (name === 'asyncFn') {
+        // AsyncFunctionHandler: takes (params, callback)
+        return (params: Record<string, unknown>, cb: (r: unknown) => void) => { cb(params); };
+      }
+      return undefined;
+    });
+    engine.createSurface('s1', 'c1', {});
+    const result = engine.resolveProperties('s1', { call: 'asyncFn', args: {} });
+    expect(result).toBeUndefined();
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

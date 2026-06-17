@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { InputNumber as AntInputNumber } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * InputNumber component — numeric input with controls.
- * Wraps Ant Design InputNumber with local state synchronization.
+ *
+ * Fully controlled: value comes from `properties.value` and every change is
+ * reported upstream via `onSyncState({ value })`.
  */
 export const InputNumber: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -19,22 +21,14 @@ export const InputNumber: React.FC<GenUIComponentProps> = ({ properties, onSyncS
     addonAfter,
     style,
   } = properties ?? {};
-  const [localValue, setLocalValue] = useState(value as number | null ?? null);
-
-  useEffect(() => {
-    if (value !== undefined) {
-      setLocalValue(value as number | null);
-    }
-  }, [value]);
 
   const handleChange = (val: number | null) => {
-    setLocalValue(val);
     onSyncState?.({ value: val });
   };
 
   return (
     <AntInputNumber
-      value={localValue}
+      value={value as number | null}
       min={min as number}
       max={max as number}
       step={step as number}

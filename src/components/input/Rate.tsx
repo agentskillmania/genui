@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Rate as AntRate } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Rate input component — star rating selector.
- * Wraps Ant Design Rate with local state synchronization.
+ *
+ * Fully controlled: value comes from `properties.value` and every change is
+ * reported upstream via `onSyncState({ value })`.
  */
 export const Rate: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -16,22 +18,14 @@ export const Rate: React.FC<GenUIComponentProps> = ({ properties, onSyncState })
     tooltips,
     style,
   } = properties ?? {};
-  const [localValue, setLocalValue] = useState(value as number ?? 0);
-
-  useEffect(() => {
-    if (value !== undefined) {
-      setLocalValue(value as number);
-    }
-  }, [value]);
 
   const handleChange = (val: number) => {
-    setLocalValue(val);
     onSyncState?.({ value: val });
   };
 
   return (
     <AntRate
-      value={localValue}
+      value={(value as number) ?? 0}
       count={count as number}
       allowHalf={allowHalf as boolean}
       allowClear={allowClear as boolean}

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Cascader as AntCascader } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Cascader input component — hierarchical multi-level selector.
- * Wraps Ant Design Cascader with local state synchronization.
+ *
+ * Fully controlled: value comes from `properties.value` and every change is
+ * reported upstream via `onSyncState({ value })`.
  */
 export const Cascader: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -15,30 +17,27 @@ export const Cascader: React.FC<GenUIComponentProps> = ({ properties, onSyncStat
     multiple,
     style,
   } = properties ?? {};
-  const [localValue, setLocalValue] = useState(value as (string | number)[] | undefined);
-
-  useEffect(() => {
-    if (value !== undefined) {
-      setLocalValue(value as (string | number)[]);
-    }
-  }, [value]);
 
   const handleChange = (
     val: (string | number)[] | ((string | number)[])[],
   ) => {
-    setLocalValue(val as (string | number)[]);
     onSyncState?.({ value: val });
   };
 
+  // antd 6 Cascader 的泛型根据 `multiple` 字面量推断 value 维度（单选一维 /
+  // 多选二维），本组件的 multiple 来自运行时数据无法静态推断，故放宽为 any。
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CascaderAny = AntCascader as any;
+
   return (
-    <AntCascader
-      value={localValue}
-      options={options as Array<{ value: string | number; label: string; children?: unknown[] }>}
+    <CascaderAny
+      value={value as (string | number)[] | undefined}
+      options={(options as React.ComponentProps<typeof AntCascader>['options']) ?? []}
       placeholder={placeholder as string}
       disabled={disabled as boolean}
-      multiple={multiple as boolean}
+      multiple={multiple ? true : undefined}
       style={style as React.CSSProperties}
-      onChange={handleChange as never}
+      onChange={handleChange}
     />
   );
 };

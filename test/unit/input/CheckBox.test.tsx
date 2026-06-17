@@ -65,12 +65,14 @@ describe('CheckBox component', () => {
     expect(onSyncState).toHaveBeenCalledWith({ checked: true });
   });
 
-  it('updates internal state when clicked', () => {
-    const { container } = render(<CheckBox {...makeProps({ checked: false })} />);
-    const input = container.querySelector('input[type="checkbox"]') as HTMLInputElement;
-    expect(input.checked).toBe(false);
-    fireEvent.click(input);
-    // After click, the internal state should toggle
-    expect(input.checked).toBe(true);
+  it('reflects external checked updates (controlled mode)', () => {
+    // Fully controlled: checked state is owned by the host. Re-rendering with
+    // a new checked value must update the checkbox.
+    const { container, rerender } = render(<CheckBox {...makeProps({ checked: false })} />);
+    const input = () => container.querySelector('input[type="checkbox"]') as HTMLInputElement;
+    expect(input().checked).toBe(false);
+
+    rerender(<CheckBox {...makeProps({ checked: true })} />);
+    expect(input().checked).toBe(true);
   });
 });

@@ -1,24 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { ColorPicker as AntColorPicker } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
-/** ColorPicker component — color selection input. */
+/**
+ * ColorPicker component — color selection input.
+ *
+ * Fully controlled: value comes from `properties.value` and every change is
+ * reported upstream via `onSyncState({ value })`. The sync key is `value`
+ * (not `color`) for consistency with other input components.
+ */
 export const ColorPicker: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const { value, disabled, showText, size, allowClear, style } = properties ?? {};
-  const [localValue, setLocalValue] = useState(value as string | undefined);
 
-  useEffect(() => {
-    if (value !== undefined) setLocalValue(value as string);
-  }, [value]);
-
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleChange = (color: any, hex: string) => {
-    setLocalValue(hex);
-    onSyncState?.({ color: hex });
+    onSyncState?.({ value: hex });
   };
 
   return (
     <AntColorPicker
-      value={localValue}
+      value={value as string}
       disabled={disabled as boolean}
       showText={showText as boolean}
       size={size as 'small' | 'middle' | 'large'}

@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { TreeSelect as AntTreeSelect } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * TreeSelect input component — tree-structured dropdown selector.
- * Wraps Ant Design TreeSelect with local state synchronization.
+ *
+ * Fully controlled: value comes from `properties.value` and every change is
+ * reported upstream via `onSyncState({ value })`.
  */
 export const TreeSelect: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -17,23 +19,15 @@ export const TreeSelect: React.FC<GenUIComponentProps> = ({ properties, onSyncSt
     treeCheckable,
     style,
   } = properties ?? {};
-  const [localValue, setLocalValue] = useState(value as string | string[] | undefined);
-
-  useEffect(() => {
-    if (value !== undefined) {
-      setLocalValue(value as string | string[]);
-    }
-  }, [value]);
 
   const handleChange = (val: string | string[]) => {
-    setLocalValue(val);
     onSyncState?.({ value: val });
   };
 
   return (
     <AntTreeSelect
-      value={localValue}
-      treeData={treeData as Array<{ value: string; title: string; children?: unknown[] }>}
+      value={value as string | string[] | undefined}
+      treeData={(treeData as React.ComponentProps<typeof AntTreeSelect>['treeData']) ?? []}
       placeholder={placeholder as string}
       disabled={disabled as boolean}
       multiple={multiple as boolean}

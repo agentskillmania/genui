@@ -1,28 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Drawer as AntDrawer } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
- * Drawer component — a sliding panel overlay with open/close state management.
- * Mirrors the Modal pattern: uses internal useState synced with the `open` prop.
+ * Drawer component — a sliding panel overlay.
+ *
+ * Fully controlled: visibility is driven by `properties.open`. Closing emits
+ * both a semantic action (`onAction('close')`) and a state sync
+ * (`onSyncState({ open: false })`); the host decides whether the drawer
+ * actually closes by updating the data model. This component never forces
+ * itself closed locally.
  */
-export const Drawer: React.FC<GenUIComponentProps> = ({ properties, children, onAction }) => {
+export const Drawer: React.FC<GenUIComponentProps> = ({ properties, children, onAction, onSyncState }) => {
   const { title, open, placement, width, closable, maskClosable, style } = properties ?? {};
-  const [visible, setVisible] = useState(!!open);
-
-  useEffect(() => {
-    setVisible(!!open);
-  }, [open]);
 
   const handleClose = () => {
     onAction?.('close');
-    setVisible(false);
+    onSyncState?.({ open: false });
   };
 
   return (
     <AntDrawer
       title={title as React.ReactNode}
-      open={visible}
+      open={!!open}
       placement={placement as 'left' | 'right' | 'top' | 'bottom'}
       width={width as number | string}
       closable={closable !== false}

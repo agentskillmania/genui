@@ -1,26 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Collapse as AntCollapse } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Collapse component — accordion-style panels that expand/collapse.
- * Syncs the active panel keys back to the host via onSyncState.
+ *
+ * Fully controlled: active panel keys come from `properties.activeKey` and
+ * every change is reported upstream via `onSyncState({ activeKeys })`.
  */
 export const Collapse: React.FC<GenUIComponentProps> = ({ properties, children, onSyncState }) => {
   const { items, activeKey, accordion, bordered, ghost, style } = properties ?? {};
 
-  const [localActiveKeys, setLocalActiveKeys] = useState<
-    string[] | string | undefined
-  >((activeKey as string[] | string | undefined) ?? undefined);
-
-  useEffect(() => {
-    if (activeKey !== undefined) {
-      setLocalActiveKeys(activeKey as string[] | string);
-    }
-  }, [activeKey]);
-
   const handleChange = (keys: string | string[]) => {
-    setLocalActiveKeys(keys);
     onSyncState?.({ activeKeys: Array.isArray(keys) ? keys : [keys] });
   };
 
@@ -34,7 +25,7 @@ export const Collapse: React.FC<GenUIComponentProps> = ({ properties, children, 
 
   return (
     <AntCollapse
-      activeKey={localActiveKeys}
+      activeKey={activeKey as string[] | string | undefined}
       accordion={accordion as boolean}
       bordered={bordered !== false}
       ghost={ghost as boolean}

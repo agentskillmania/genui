@@ -12,6 +12,7 @@ vi.mock('../../../src/SurfaceManager', () => {
     SurfaceManager: vi.fn().mockImplementation(() => ({
       initialize: vi.fn().mockResolvedValue(undefined),
       destroy: vi.fn(),
+      setFunctionResolver: vi.fn(),
     })),
   };
 });
@@ -64,6 +65,7 @@ describe('useSurfaceManager', () => {
         ({
           initialize: vi.fn().mockRejectedValue(new Error('init failed')),
           destroy: vi.fn(),
+          setFunctionResolver: vi.fn(),
         }) as unknown as InstanceType<typeof SurfaceManager>,
     );
 
@@ -85,6 +87,7 @@ describe('useSurfaceManager', () => {
         ({
           initialize: vi.fn().mockRejectedValue('string-error'),
           destroy: vi.fn(),
+          setFunctionResolver: vi.fn(),
         }) as unknown as InstanceType<typeof SurfaceManager>,
     );
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { DatePicker, TimePicker, Space } from 'antd';
 import type { GenUIComponentProps } from '../types';
 import type { Dayjs } from 'dayjs';
@@ -13,24 +13,24 @@ dayjs.extend(customParseFormat);
 
 /**
  * DateTimeInput component — date, time, or datetime picker.
+ *
+ * Fully controlled: value comes from `properties.value` and every change is
+ * reported upstream via `onSyncState({ value })`.
  */
 export const DateTimeInput: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const { value, placeholder, disabled, mode, format, style } = properties ?? {};
-  const [localValue, setLocalValue] = useState<Dayjs | null>(
-    value ? dayjs(value as string) : null
-  );
 
   const handleChange = (date: Dayjs | null) => {
-    setLocalValue(date);
     onSyncState?.({ value: date?.format((format as string) || 'YYYY-MM-DD') });
   };
 
   const dateFormat = (format as string) || 'YYYY-MM-DD';
+  const dayjsValue = value ? dayjs(value as string) : null;
 
   if (mode === 'time') {
     return (
       <TimePicker
-        value={localValue}
+        value={dayjsValue}
         placeholder={placeholder as string}
         disabled={disabled as boolean}
         format={dateFormat}
@@ -44,7 +44,7 @@ export const DateTimeInput: React.FC<GenUIComponentProps> = ({ properties, onSyn
     return (
       <Space>
         <DatePicker
-          value={localValue}
+          value={dayjsValue}
           placeholder={placeholder as string}
           disabled={disabled as boolean}
           format={dateFormat}
@@ -52,7 +52,7 @@ export const DateTimeInput: React.FC<GenUIComponentProps> = ({ properties, onSyn
           onChange={handleChange}
         />
         <TimePicker
-          value={localValue}
+          value={dayjsValue}
           disabled={disabled as boolean}
           format="HH:mm:ss"
           style={style as React.CSSProperties}
@@ -64,7 +64,7 @@ export const DateTimeInput: React.FC<GenUIComponentProps> = ({ properties, onSyn
 
   return (
     <DatePicker
-      value={localValue}
+      value={dayjsValue}
       placeholder={placeholder as string}
       disabled={disabled as boolean}
       format={dateFormat}

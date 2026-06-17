@@ -73,11 +73,15 @@ describe('TextField component', () => {
     expect(onSyncState).toHaveBeenCalledWith({ value: 'new text' });
   });
 
-  it('updates internal value on change', () => {
-    const { container } = render(<TextField {...makeProps()} />);
-    const input = container.querySelector('input') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: 'updated' } });
-    expect(input.value).toBe('updated');
+  it('reflects external value updates (controlled mode)', () => {
+    // Fully controlled: the host owns state. Re-rendering with a new value
+    // must update the input — the component has no internal state of its own.
+    const { container, rerender } = render(<TextField {...makeProps({ value: 'first' })} />);
+    const input = () => container.querySelector('input') as HTMLInputElement;
+    expect(input().value).toBe('first');
+
+    rerender(<TextField {...makeProps({ value: 'second' })} />);
+    expect(input().value).toBe('second');
   });
 
   it('respects maxLength property', () => {

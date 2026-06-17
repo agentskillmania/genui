@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { SurfaceManager } from '../SurfaceManager';
+import { Genui } from '../GenuiEngine';
 
 export interface UseSurfaceManagerResult {
   surfaceManager: SurfaceManager | null;
@@ -25,6 +26,10 @@ export function useSurfaceManager(): UseSurfaceManagerResult {
   useEffect(() => {
     let isMounted = true;
     const sm = new SurfaceManager();
+
+    // Wire up function resolution so `{ call, args }` data bindings resolve
+    // against handlers registered via Genui.registerFunction.
+    sm.setFunctionResolver((name) => Genui.getFunction(name));
 
     sm.initialize()
       .then(() => {

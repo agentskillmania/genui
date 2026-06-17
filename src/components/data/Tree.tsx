@@ -1,9 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Tree as AntTree } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
-/** Tree component — hierarchical tree view with selection and checkable support. */
-export const Tree: React.FC<GenUIComponentProps> = ({ properties, onAction }) => {
+/**
+ * Tree component — hierarchical tree view with selection and checkable support.
+ *
+ * Fully controlled: selectedKeys/checkedKeys come from `properties` and every
+ * interaction is reported both as a state sync (`onSyncState`) and a semantic
+ * action (`onAction`). The host owns the selection state.
+ */
+export const Tree: React.FC<GenUIComponentProps> = ({ properties, onAction, onSyncState }) => {
   const {
     treeData,
     checkable,
@@ -17,30 +23,16 @@ export const Tree: React.FC<GenUIComponentProps> = ({ properties, onAction }) =>
     style,
   } = properties ?? {};
 
-  const [localSelectedKeys, setLocalSelectedKeys] = useState<React.Key[]>(
-    (selectedKeys as React.Key[]) ?? [],
-  );
-  const [localCheckedKeys, setLocalCheckedKeys] = useState<React.Key[]>(
-    (checkedKeys as React.Key[]) ?? [],
-  );
-
-  useEffect(() => {
-    if (selectedKeys) setLocalSelectedKeys(selectedKeys as React.Key[]);
-  }, [selectedKeys]);
-
-  useEffect(() => {
-    if (checkedKeys) setLocalCheckedKeys(checkedKeys as React.Key[]);
-  }, [checkedKeys]);
-
   const handleSelect = (keys: React.Key[]) => {
-    setLocalSelectedKeys(keys);
+    onSyncState?.({ selectedKeys: keys });
     if (keys.length > 0) {
       onAction?.('select', { key: keys[0] });
     }
   };
 
-  const handleCheck = (keys: React.Key[]) => {
-    setLocalCheckedKeys(keys);
+  const handleCheck = (checked: React.Key[] | { checked: React.Key[]; halfChecked: React.Key[] }) => {
+    const keys = Array.isArray(checked) ? checked : checked.checked;
+    onSyncState?.({ checkedKeys: keys });
     onAction?.('check', { checkedKeys: keys });
   };
 
@@ -49,8 +41,8 @@ export const Tree: React.FC<GenUIComponentProps> = ({ properties, onAction }) =>
       treeData={treeData as any[]}
       checkable={checkable as boolean}
       selectable={selectable !== false}
-      checkedKeys={localCheckedKeys}
-      selectedKeys={localSelectedKeys}
+      checkedKeys={(checkedKeys as React.Key[]) ?? []}
+      selectedKeys={(selectedKeys as React.Key[]) ?? []}
       defaultExpandAll={defaultExpandAll as boolean}
       showLine={showLine as boolean}
       showIcon={showIcon as boolean}

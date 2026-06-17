@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Switch as AntSwitch } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Switch input component — boolean toggle.
- * Wraps Ant Design Switch with local state synchronization.
+ *
+ * Fully controlled: checked state comes from `properties.checked` and every
+ * toggle is reported upstream via `onSyncState({ checked })`.
  */
 export const Switch: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -16,20 +18,14 @@ export const Switch: React.FC<GenUIComponentProps> = ({ properties, onSyncState 
     unCheckedChildren,
     style,
   } = properties ?? {};
-  const [localChecked, setLocalChecked] = useState(!!checked);
-
-  useEffect(() => {
-    setLocalChecked(!!checked);
-  }, [checked]);
 
   const handleChange = (val: boolean) => {
-    setLocalChecked(val);
     onSyncState?.({ checked: val });
   };
 
   return (
     <AntSwitch
-      checked={localChecked}
+      checked={!!checked}
       disabled={disabled as boolean}
       loading={loading as boolean}
       size={size as 'small' | 'default'}

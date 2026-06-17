@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Transfer as AntTransfer } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Transfer input component — dual-list item mover.
- * Wraps Ant Design Transfer with local state synchronization.
+ *
+ * Fully controlled: targetKeys/selectedKeys come from `properties` and every
+ * change is reported upstream via `onSyncState`.
  */
 export const Transfer: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -16,48 +18,27 @@ export const Transfer: React.FC<GenUIComponentProps> = ({ properties, onSyncStat
     oneWay,
     style,
   } = properties ?? {};
-  const [localTargetKeys, setLocalTargetKeys] = useState(
-    (targetKeys as string[]) ?? [],
-  );
-  const [localSelectedKeys, setLocalSelectedKeys] = useState(
-    (selectedKeys as string[]) ?? [],
-  );
-
-  useEffect(() => {
-    if (targetKeys !== undefined) {
-      setLocalTargetKeys(targetKeys as string[]);
-    }
-  }, [targetKeys]);
-
-  useEffect(() => {
-    if (selectedKeys !== undefined) {
-      setLocalSelectedKeys(selectedKeys as string[]);
-    }
-  }, [selectedKeys]);
 
   const handleChange = (
-    nextTargetKeys: string[],
+    nextTargetKeys: React.Key[],
     direction: 'left' | 'right',
-    moveKeys: string[],
+    moveKeys: React.Key[],
   ) => {
-    setLocalTargetKeys(nextTargetKeys);
     onSyncState?.({ targetKeys: nextTargetKeys, direction, moveKeys });
   };
 
   const handleSelectChange = (
-    sourceSelectedKeys: string[],
-    targetSelectedKeys: string[],
+    sourceSelectedKeys: React.Key[],
+    targetSelectedKeys: React.Key[],
   ) => {
-    const next = [...sourceSelectedKeys, ...targetSelectedKeys];
-    setLocalSelectedKeys(next);
-    onSyncState?.({ selectedKeys: next });
+    onSyncState?.({ selectedKeys: [...sourceSelectedKeys, ...targetSelectedKeys] });
   };
 
   return (
     <AntTransfer
-      dataSource={(dataSource as Array<{ key: string; title: string; description?: string }>) ?? []}
-      targetKeys={localTargetKeys}
-      selectedKeys={localSelectedKeys}
+      dataSource={(dataSource as Array<{ key: React.Key; title: string; description?: string }>) ?? []}
+      targetKeys={(targetKeys as React.Key[]) ?? []}
+      selectedKeys={(selectedKeys as React.Key[]) ?? []}
       titles={titles as [string, string]}
       showSearch={showSearch as boolean}
       oneWay={oneWay as boolean}

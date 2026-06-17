@@ -16,12 +16,39 @@ import type {
   SyncUIToDataEvent,
   SurfaceSize,
   SurfaceSizeProvider,
+  FunctionHandler,
 } from '../types/sdk';
 import type { SurfaceEvent, SurfaceEventListener } from './types';
+
+/**
+ * Resolver that looks up a registered function handler by name.
+ * Injected into SurfaceState so it can resolve `{ call, args }` bindings
+ * without depending on the Genui facade directly.
+ */
+export type FunctionResolver = (name: string) => FunctionHandler | undefined;
 
 // ---------------------------------------------------------------------------
 // Internal helpers: path-based access on nested objects
 // ---------------------------------------------------------------------------
+
+/**
+ * Decode a single JSON Pointer (RFC 6901) reference token.
+ *
+ * Per RFC 6901, `~1` decodes to `/` and `~0` decodes to `~`.
+ * Decode order MUST be `~1`-first then `~0`: otherwise `~01` (which
+ * represents the literal string `~1`) would be mangled into `/`.
+ */
+function decodePointerSegment(segment: string): string {
+  return segment.replace(/~1/g, '/').replace(/~0/g, '~');
+}
+
+/** Split a JSON Pointer string into decoded reference-token segments. */
+function splitPointer(path: string, isAbsolute: boolean): string[] {
+  const raw = isAbsolute
+    ? path.split('/').filter((s) => s.length > 0)
+    : path.split('/');
+  return raw.map(decodePointerSegment);
+}
 
 /**
  * Walk `obj` along `segments` and return the leaf value.
@@ -68,18 +95,23 @@ export class SurfaceState {
   private dataModel: Record<string, unknown> = {};
   /** Theme configuration */
   private readonly themeConfig: Record<string, string>;
+  /** Optional function resolver for `{ call, args }` data bindings */
+  private readonly functionResolver?: FunctionResolver;
 
   /**
-   * @param surfaceId - Unique surface identifier
-   * @param catalogId - Catalog identifier for component lookup
-   * @param theme     - Theme configuration key-value pairs
+   * @param surfaceId   - Unique surface identifier
+   * @param catalogId   - Catalog identifier for component lookup
+   * @param theme       - Theme configuration key-value pairs
+   * @param functionResolver - Optional resolver for FunctionCall bindings
    */
   constructor(
     public readonly surfaceId: string,
     public readonly catalogId: string,
     theme: Record<string, string>,
+    functionResolver?: FunctionResolver,
   ) {
     this.themeConfig = { ...theme };
+    this.functionResolver = functionResolver;
   }
 
   // ---- Component tree ----
@@ -178,8 +210,8 @@ export class SurfaceState {
       this.dataModel = value as Record<string, unknown>;
       return;
     }
-    // JSON Pointer (RFC 6901): /user/name — split on '/' and skip empty segments
-    const segments = path.split('/').filter((s) => s.length > 0);
+    // JSON Pointer (RFC 6901): /user/name — split + decode ~0/~1 escapes
+    const segments = splitPointer(path, true);
     setByPath(this.dataModel, segments, value);
   }
 
@@ -188,7 +220,7 @@ export class SurfaceState {
    * If the path does not exist yet, the value is set directly (no append).
    */
   appendDataModel(path: string, value: string): void {
-    const segments = path.split('/').filter((s) => s.length > 0);
+    const segments = splitPointer(path, true);
     const existing = getByPath(this.dataModel, segments);
     if (typeof existing === 'string') {
       setByPath(this.dataModel, segments, existing + value);
@@ -215,10 +247,16 @@ export class SurfaceState {
       // A2UI v0.9 path binding: { "path": "/pointer" }
       if ('path' in obj && typeof obj.path === 'string') {
         const path = obj.path as string;
+        // Absolute pointers use RFC 6901 (~0/~1 escapes); relative dotted
+        // paths (legacy) are split as-is without decoding.
         const segments = path.startsWith('/')
-          ? path.split('/').filter((s) => s.length > 0)
+          ? splitPointer(path, true)
           : path.split('.');
         return getByPath(this.dataModel, segments);
+      }
+      // A2UI v0.9 function call binding: { "call": "name", "args": {...} }
+      if ('call' in obj && typeof obj.call === 'string') {
+        return this.resolveFunctionCall(obj.call, obj.args as Record<string, unknown> | undefined);
       }
       // Regular object — walk recursively
       const resolved: Record<string, unknown> = {};
@@ -228,6 +266,37 @@ export class SurfaceState {
       return resolved;
     }
     return value;
+  }
+
+  /**
+   * Resolve a `{ call, args }` FunctionCall binding synchronously.
+   *
+   * Looks up the handler via the injected function resolver and invokes it
+   * with the (recursively resolved) args. Async handlers (those accepting a
+   * callback parameter) are not supported in this synchronous resolution
+   * pass — the handler is expected to return a value directly. If the handler
+   * appears async, a warning is emitted and `undefined` is returned.
+   */
+  private resolveFunctionCall(name: string, args: Record<string, unknown> | undefined): unknown {
+    if (!this.functionResolver) {
+      console.warn(`[GenUI] FunctionCall binding "${name}" cannot be resolved: no function resolver registered`);
+      return undefined;
+    }
+    const handler = this.functionResolver(name);
+    if (!handler) {
+      console.warn(`[GenUI] FunctionCall binding "${name}" cannot be resolved: no handler registered`);
+      return undefined;
+    }
+    const resolvedArgs = args ? (this.resolveProperties(args) as Record<string, unknown>) : {};
+    // FunctionHandler is either SyncFunctionHandler (returns value) or
+    // AsyncFunctionHandler (takes a callback). Sync resolution only supports
+    // the former. Async handlers have arity >= 2 (params, callback); we treat
+    // handler.length < 2 as sync. Async handlers emit a warning.
+    if (handler.length >= 2) {
+      console.warn(`[GenUI] Async function handler "${name}" is not supported in synchronous resolveProperties; returning undefined`);
+      return undefined;
+    }
+    return (handler as (params: Record<string, unknown>) => unknown)(resolvedArgs);
   }
 
   // ---- Theme ----
@@ -251,6 +320,15 @@ export class SurfaceEngine {
   private listeners = new Set<SurfaceEventListener>();
   private cachedSizes = new Map<string, SurfaceSize>();
   private sizeProvider: SurfaceSizeProvider | null = null;
+  private functionResolver: FunctionResolver | null = null;
+
+  /**
+   * Set the function resolver used to evaluate `{ call, args }` bindings.
+   * Applied to all subsequently created surfaces.
+   */
+  setFunctionResolver(resolver: FunctionResolver | null): void {
+    this.functionResolver = resolver;
+  }
 
   // ---- Surface lifecycle ----
 
@@ -263,7 +341,7 @@ export class SurfaceEngine {
     catalogId: string,
     theme: Record<string, string>,
   ): void {
-    const state = new SurfaceState(surfaceId, catalogId, theme);
+    const state = new SurfaceState(surfaceId, catalogId, theme, this.functionResolver ?? undefined);
     this.surfaces.set(surfaceId, state);
     this.emit({ type: 'createSurface', surfaceId });
   }

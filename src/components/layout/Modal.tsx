@@ -1,26 +1,27 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Modal as AntModal } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Modal layout component — overlay dialog with ok/cancel actions.
+ *
+ * Fully controlled: visibility is driven by `properties.open`. Ok/Cancel
+ * emit both a semantic action (`onAction('ok'|'cancel')`) and a state sync
+ * (`onSyncState({ open: false })`); the host decides whether the modal
+ * actually closes by updating the data model. This component never forces
+ * itself closed locally.
  */
-export const Modal: React.FC<GenUIComponentProps> = ({ properties, children, onAction }) => {
+export const Modal: React.FC<GenUIComponentProps> = ({ properties, children, onAction, onSyncState }) => {
   const { title, open, width, centered, closable, maskClosable, footer, style } = properties ?? {};
-  const [visible, setVisible] = useState(!!open);
-
-  useEffect(() => {
-    setVisible(!!open);
-  }, [open]);
 
   const handleOk = () => {
     onAction?.('ok');
-    setVisible(false);
+    onSyncState?.({ open: false });
   };
 
   const handleCancel = () => {
     onAction?.('cancel');
-    setVisible(false);
+    onSyncState?.({ open: false });
   };
 
   // footer: 'default' | null | ReactNode
@@ -29,7 +30,7 @@ export const Modal: React.FC<GenUIComponentProps> = ({ properties, children, onA
   return (
     <AntModal
       title={title as React.ReactNode}
-      open={visible}
+      open={!!open}
       width={width as number | string}
       centered={centered as boolean}
       closable={closable !== false}

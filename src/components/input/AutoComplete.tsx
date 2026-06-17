@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { AutoComplete as AntAutoComplete } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * AutoComplete input component — type-ahead text input with suggestions.
- * Wraps Ant Design AutoComplete with local state synchronization.
+ *
+ * Fully controlled: value comes from `properties.value` and every change is
+ * reported upstream via `onSyncState({ value })`.
  */
 export const AutoComplete: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const {
@@ -14,22 +16,14 @@ export const AutoComplete: React.FC<GenUIComponentProps> = ({ properties, onSync
     disabled,
     style,
   } = properties ?? {};
-  const [localValue, setLocalValue] = useState((value as string) ?? '');
-
-  useEffect(() => {
-    if (value !== undefined) {
-      setLocalValue(value as string);
-    }
-  }, [value]);
 
   const handleChange = (val: string) => {
-    setLocalValue(val);
     onSyncState?.({ value: val });
   };
 
   return (
     <AntAutoComplete
-      value={localValue}
+      value={(value as string) ?? ''}
       options={options as Array<{ value: string; label?: string }>}
       placeholder={placeholder as string}
       disabled={disabled as boolean}

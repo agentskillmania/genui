@@ -1,27 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Steps as AntSteps } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
 /**
  * Steps component — step-by-step progress indicator with change callback.
- * Syncs the current step index back to the host via onSyncState.
+ *
+ * Fully controlled: current step comes from `properties.current` and every
+ * change is reported upstream via `onSyncState({ current })`.
  */
 export const Steps: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const { current, direction, size, status, items, style } = properties ?? {};
-  const [localCurrent, setLocalCurrent] = useState((current as number) ?? 0);
-
-  useEffect(() => {
-    setLocalCurrent((current as number) ?? 0);
-  }, [current]);
 
   const handleChange = (val: number) => {
-    setLocalCurrent(val);
     onSyncState?.({ current: val });
   };
 
   return (
     <AntSteps
-      current={localCurrent}
+      current={(current as number) ?? 0}
       direction={direction as 'horizontal' | 'vertical'}
       size={size as 'default' | 'small'}
       status={status as 'wait' | 'process' | 'finish' | 'error'}
