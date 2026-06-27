@@ -413,7 +413,13 @@ Data table with pagination (Ant Design `Table`).
 {"id": "tb1", "component": "Table", "columns": [{"title": "Name", "dataIndex": "name", "key": "name"}], "dataSource": {"path": "/data/rows"}, "bordered": true, "size": "middle", "pagination": true, "style": {}}
 ```
 
-Properties: `columns` (array of `{title, dataIndex, key, ...}`), `dataSource`, `bordered`, `size` (`small|middle|large`), `pagination`, `style`
+Row click (drilldown): set `rowClickAction` to an action name. Clicking a row fires `onAction(rowClickAction, { record })` with the full row object, letting the host open a detail view. Omit for a read-only table.
+
+```json
+{"id": "empTable", "component": "Table", "columns": [{"title": "工号", "dataIndex": "eid"}, {"title": "姓名", "dataIndex": "name"}], "dataSource": {"path": "/emps"}, "rowClickAction": "openEmployee", "pagination": false, "size": "middle"}
+```
+
+Properties: `columns` (array of `{title, dataIndex, key, ...}`), `dataSource`, `bordered`, `size` (`small|middle|large`), `pagination`, `rowClickAction` (action name fired on row click, host receives `{record}`), `style`
 
 ### `RichText`
 
@@ -768,7 +774,13 @@ Data shape for the example above (one row per X category, one column per series 
 ]
 ```
 
-Properties: `chartType`, `data`, `config`, `height`, `width`, `style`
+Series click (drilldown): set `clickAction` to an action name. Clicking any series item (bar / pie slice / line point) fires `onAction(clickAction, { name, value, seriesName, dataIndex })`, letting the host open a drilldown for that category. Omit for a non-interactive chart.
+
+```json
+{"id": "chart1", "component": "Chart", "chartType": "bar", "clickAction": "drilldownCity", "data": {"path": "/data/cities"}, "config": {"xField": "city", "yField": "trips"}, "height": 320}
+```
+
+Properties: `chartType`, `data`, `config`, `height`, `width`, `clickAction` (action name fired on series click, host receives `{name, value, seriesName, dataIndex}`), `style`
 
 ---
 

@@ -105,6 +105,41 @@ Rules:
 - `path` must not use dot notation
 - `value` must be semantically consistent with `path`
 
+## Action Events (Board → Host)
+
+`updateDataModel` flows **host → board** (data in). Actions flow the opposite way, **board → host** (user intent out): when the user clicks a row, a chart series, a menu item, or a button, the board emits an action event that the host listens to and handles (e.g. open a drilldown, switch module, export).
+
+Declaring an action trigger is component-specific:
+
+| Component | Property | Fires on | Context |
+|-----------|----------|----------|---------|
+| Table | `rowClickAction` | row click | `{record}` — the full row object |
+| Chart | `clickAction` | series click (bar/slice/point) | `{name, value, seriesName, dataIndex}` |
+| Menu | `select` (built-in) | item select | `{key}` |
+| Button / FloatButton | `click` (built-in) | press | — |
+
+The host receives `{action, sourceComponentId, context}` and routes by `action` name. **One action name can be shared across multiple triggers** — e.g. a Table row and two Charts can all declare `clickAction: "drilldown"`; the host opens the same drilldown using whichever context field is present.
+
+```json
+// Two triggers, one action name — host opens the same drilldown
+{"id": "summaryTable", "component": "Table", "rowClickAction": "drilldown", "columns": [...], "dataSource": {"path": "/rows"}}
+{"id": "cityChart", "component": "Chart", "chartType": "bar", "clickAction": "drilldown", "config": {"xField": "city", "yField": "trips"}}
+```
+
+Host handler (read `action` to route; read `context` for the clicked target):
+
+```ts
+sm.on('action', (event) => {
+  const { action, context } = event.payload;
+  if (action === 'drilldown') {
+    const key = context?.record?.position ?? context?.name;  // table gives record, chart gives name
+    openDrilldown(key);
+  }
+});
+```
+
+Action names are **convention, not enum** — invent clear verbs (`drilldown`, `exportCSV`, `switchToDepartment`). The board only declares them; the host owns the behaviour.
+
 ## Function Call Binding
 
 Beyond path bindings, any property value can invoke a registered function and

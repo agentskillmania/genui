@@ -572,20 +572,28 @@ function buildBarSeries(
  *   config    — field mappings (xField, yField, angleField, colorField) and display options
  *   width     — container width (default 100%)
  *   height    — container height (default 400px)
+ *   clickAction — action name fired when a series item is clicked
  *   style     — additional CSS for the container
  */
-export const Chart: React.FC<GenUIComponentProps> = ({ properties }) => {
+export const Chart: React.FC<GenUIComponentProps> = ({ properties, onAction }) => {
   const {
     chartType = 'bar',
     data = [],
     config = {},
     width = '100%',
     height = 400,
+    clickAction,
     style,
   } = properties ?? {};
 
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<echarts.ECharts | null>(null);
+  // Keep the latest onAction/clickAction in refs so the click handler (bound
+  // once at init) always invokes the current callback without re-binding.
+  const onActionRef = useRef(onAction);
+  const clickActionRef = useRef(clickAction);
+  onActionRef.current = onAction;
+  clickActionRef.current = clickAction;
 
   const getOption = useCallback(() => {
     return buildEChartsOption(
@@ -602,6 +610,21 @@ export const Chart: React.FC<GenUIComponentProps> = ({ properties }) => {
     const chart = echarts.init(containerRef.current);
     chartRef.current = chart;
     chart.setOption(getOption());
+
+    // Series click → onAction(clickAction, { name, value, seriesName, dataIndex })
+    chart.on('click', (params) => {
+      const action = clickActionRef.current as string | undefined;
+      const handler = onActionRef.current;
+      if (action && handler && params) {
+        handler(action, {
+          name: params.name,
+          value: params.value,
+          seriesName: params.seriesName,
+          seriesIndex: params.seriesIndex,
+          dataIndex: params.dataIndex,
+        });
+      }
+    });
 
     return () => {
       chart.dispose();

@@ -4,9 +4,14 @@ import type { GenUIComponentProps } from '../types';
 
 /**
  * Table data component — columnar data display with optional pagination.
+ *
+ * Row interaction: set `rowClickAction` to an action name. When a row is
+ * clicked, `onAction(rowClickAction, { record })` fires, giving the host the
+ * full row object so it can open a drilldown / detail view. Omit for a
+ * read-only table.
  */
-export const Table: React.FC<GenUIComponentProps> = ({ properties }) => {
-  const { columns, dataSource, bordered, size, pagination, style } = properties ?? {};
+export const Table: React.FC<GenUIComponentProps> = ({ properties, onAction }) => {
+  const { columns, dataSource, bordered, size, pagination, rowClickAction, style } = properties ?? {};
 
   return (
     <AntTable
@@ -17,6 +22,14 @@ export const Table: React.FC<GenUIComponentProps> = ({ properties }) => {
       pagination={pagination !== false ? { pageSize: 10 } : false}
       style={style as React.CSSProperties}
       rowKey="id"
+      onRow={(record) => ({
+        onClick: () => {
+          if (rowClickAction && onAction) {
+            onAction(rowClickAction as string, { record });
+          }
+        },
+        style: rowClickAction ? { cursor: 'pointer' } : undefined,
+      })}
     />
   );
 };
