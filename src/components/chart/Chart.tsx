@@ -73,6 +73,34 @@ echarts.use([
   CanvasRenderer,
 ]);
 
+/** One series definition for the `combo` chart type (multi-series / dual-axis). */
+export interface ComboSeriesSpec {
+  /** ECharts series type: `bar` | `line` | `area`(=line+areaStyle) | `scatter` */
+  type: 'bar' | 'line' | 'area' | 'scatter';
+  /** Series display name (legend / tooltip). */
+  name?: string;
+  /** Data field whose values feed this series. Maps each row to `row[field]`. */
+  field: string;
+  /** Which Y axis this series binds to. `0` = left, `1` = right (dual-axis). Default `0`. */
+  yAxisIndex?: number;
+  /** Smooth the line (line/area only). */
+  smooth?: boolean;
+  /** Show value labels on bars/lines. */
+  labelVisible?: boolean;
+  /** Fixed series color (CSS hex). Omit to use ECharts default palette. */
+  color?: string;
+}
+
+/** Y-axis definition for the `combo` chart type. */
+export interface ComboYAxisSpec {
+  /** Axis display name (e.g. "费用(万元)"). */
+  name?: string;
+  /** Axis position. `left` (default) or `right`. */
+  position?: 'left' | 'right';
+  /** Fixed display unit suffix appended to axis tick labels, e.g. "%". */
+  unit?: string;
+}
+
 /** Supported chart type strings from the A2UI protocol */
 export type ChartType =
   | 'bar'
@@ -98,7 +126,8 @@ export type ChartType =
   | 'graph'
   | 'parallel'
   | 'pictorialBar'
-  | 'effectScatter';
+  | 'effectScatter'
+  | 'combo';
 
 /**
  * Map A2UI chart config fields to an ECharts option object.
@@ -438,6 +467,51 @@ export function buildEChartsOption(
           ]),
         }],
       };
+
+    case 'combo': {
+      // Multi-series / dual-axis combo chart (e.g. bar + line on two Y axes).
+      //   config.xField   — shared category field (X axis)
+      //   config.yAxes    — ComboYAxisSpec[] (default: single value axis)
+      //   config.series   — ComboSeriesSpec[] (one entry per rendered series)
+      const seriesSpecs = (config.series as ComboSeriesSpec[]) || [];
+      const yAxesRaw = (config.yAxes as ComboYAxisSpec[]) || [];
+
+      const yAxisList = yAxesRaw.length
+        ? yAxesRaw.map((y) => ({
+            type: 'value' as const,
+            name: y.name,
+            position: y.position ?? 'left',
+            axisLabel: y.unit ? { formatter: `{value}${y.unit}` } : undefined,
+          }))
+        : [{ type: 'value' as const }];
+
+      const series = seriesSpecs.map((s) => {
+        const isLine = s.type === 'line' || s.type === 'area';
+        const base: Record<string, unknown> = {
+          type: isLine ? 'line' : s.type,
+          name: s.name,
+          yAxisIndex: s.yAxisIndex ?? 0,
+          data: data.map((d) => d[s.field] as number),
+          itemStyle: s.color ? { color: s.color } : undefined,
+          lineStyle: s.color && isLine ? { color: s.color } : undefined,
+        };
+        if (isLine) {
+          base.smooth = s.smooth;
+          if (s.type === 'area') base.areaStyle = s.color ? { color: s.color, opacity: 0.15 } : {};
+        }
+        if (s.labelVisible) {
+          base.label = { show: true, position: s.type === 'bar' ? 'top' : undefined };
+        }
+        return base;
+      });
+
+      return {
+        ...baseOption,
+        xAxis: { type: 'category', data: categories },
+        yAxis: yAxisList,
+        series,
+      };
+    }
 
     default:
       return baseOption;

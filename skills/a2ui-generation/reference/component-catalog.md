@@ -49,22 +49,32 @@ Minimal structure:
 Vertical layout container (Ant Design `Col` with `flexDirection: column`).
 
 ```json
-{"id": "col1", "component": "Column", "children": ["child1", "child2"], "span": 8, "offset": 0, "flex": "auto", "style": {}}
+{"id": "col1", "component": "Column", "children": ["child1", "child2"], "gap": 16, "span": 8, "offset": 0, "flex": "auto", "style": {}}
 ```
 
-Properties: `span` (1–24 grid), `offset`, `push`, `pull`, `order`, `flex`, `style`
+Properties: `gap` (vertical spacing between children, default `12`), `span` (1–24 grid), `offset`, `push`, `pull`, `order`, `flex`, `style`
 
 ### `Row`
 
 Horizontal layout container (Ant Design `Row`).
 
-**Row + Column contract**: Row expects `Column` children for grid layout. Non-Column children are auto-wrapped with natural width (`flex="auto"`). For equal-width distribution across children, use explicit `Column` wrappers with `flex: 1`.
+**Two layout modes:**
+
+1. **Grid mode (default):** Ant Design Row + Col grid. Non-`Column` children are auto-wrapped with `flex="0 1 auto"` (natural content width, **no grow** — sit left-aligned at their own width). Use `gutter` for spacing. For equal distribution, set `"equalWidth": true` (see below) or wrap children in `Column` with `flex: 1`.
+2. **Equal-width mode (`"equalWidth": true`):** CSS grid `repeat(auto-fit, minmax(200px, 1fr))` — every child takes an equal share and wraps responsively. Use this for KPI card rows or any row where children must be the same width. Use `gap` for spacing here.
+
+`gap` is honoured in both modes.
 
 ```json
-{"id": "row1", "component": "Row", "children": ["child1", "child2"], "justify": "start", "align": "top", "gutter": 16, "wrap": true, "style": {}}
+{"id": "row1", "component": "Row", "children": ["child1", "child2"], "justify": "start", "align": "top", "gutter": 16, "gap": 16, "wrap": true, "equalWidth": false, "style": {}}
 ```
 
-Properties: `justify` (`start|end|center|spaceAround|spaceBetween|spaceEvenly`), `align` (`top|middle|bottom|stretch`), `gutter` (number or `[horizontal, vertical]`), `wrap`, `style`
+Equal-width example (KPI cards, auto-fit equal columns):
+```json
+{"id": "kpiRow", "component": "Row", "children": ["kpi1", "kpi2", "kpi3"], "equalWidth": true, "gap": 16, "style": {"marginBottom": 16}}
+```
+
+Properties: `justify` (`start|end|center|spaceAround|spaceBetween|spaceEvenly`), `align` (`top|middle|bottom|stretch`), `gutter` (number or `[horizontal, vertical]`, grid mode spacing), `gap` (spacing in both modes), `wrap`, `equalWidth` (boolean, switch to equal-width grid), `style`
 
 ### `List`
 
@@ -83,13 +93,13 @@ Properties: `header`, `footer`, `bordered`, `split`, `size` (`small|default|larg
 
 ### `Card`
 
-Bordered content container (Ant Design `Card`).
+Bordered content container (Ant Design `Card`). Defaults to `variant: "outlined"` (border-only) and sets `min-width: 0` so wide children (charts, tables) cannot overflow their grid column.
 
 ```json
-{"id": "card1", "component": "Card", "children": ["body1"], "title": "Card Title", "extra": "More", "bordered": true, "hoverable": false, "style": {}}
+{"id": "card1", "component": "Card", "children": ["body1"], "title": "Card Title", "extra": "More", "variant": "outlined", "bordered": true, "hoverable": false, "style": {}}
 ```
 
-Properties: `title`, `extra`, `bordered`, `hoverable`, `style`
+Properties: `title`, `extra`, `variant` (`outlined` default | `borderless`), `bordered`, `hoverable`, `style`
 
 ### `Tabs`
 
@@ -267,7 +277,15 @@ Dropdown / radio / checkbox group (Ant Design `Select`).
 {"id": "cp1", "component": "ChoicePicker", "value": {"path": "/data/choice"}, "options": [{"label": "A", "value": "a"}, {"label": "B", "value": "b"}], "placeholder": "Select...", "disabled": false, "mode": "single", "size": "middle", "style": {}}
 ```
 
-Properties: `value`, `options` (array of `{label, value}`), `placeholder`, `disabled`, `mode` (`single|multiple`), `size`, `style`
+`options` also accepts a binding path — use it when candidate values come from a data source (dynamic, host-maintained) instead of being fixed at design time:
+
+```json
+{"id": "cp1", "component": "ChoicePicker", "value": {"path": "/data/choice"}, "options": {"path": "/data/choices"}, "mode": "multiple", "placeholder": "Select...", "style": {}}
+```
+
+The host supplies and refreshes `/data/choices` via `updateDataModel`; the component re-renders automatically without rebuilding the tree. This applies to all candidate-list attributes across input components — `Cascader`/`AutoComplete` `options`, `TreeSelect` `treeData` (see *Data Binding → Structured Array Property Binding*).
+
+Properties: `value`, `options` (array of `{label, value}` **or** `{"path": ...}`), `placeholder`, `disabled`, `mode` (`single|multiple`), `size`, `style`
 
 ### `Slider`
 
@@ -327,7 +345,7 @@ Autocomplete text input (Ant Design `AutoComplete`).
 {"id": "ac1", "component": "AutoComplete", "value": {"path": "/data/search"}, "options": [{"value": "apple"}, {"value": "banana"}], "placeholder": "Search...", "style": {}}
 ```
 
-Properties: `value`, `options`, `placeholder`, `style`
+Properties: `value`, `options` (array of `{value}` **or** `{"path": ...}`), `placeholder`, `style`
 
 ### `Cascader`
 
@@ -337,7 +355,9 @@ Multi-level dropdown (Ant Design `Cascader`).
 {"id": "cas1", "component": "Cascader", "value": {"path": "/data/region"}, "options": [{"value": "zhejiang", "label": "Zhejiang", "children": [{"value": "hangzhou", "label": "Hangzhou"}]}], "placeholder": "Select region", "style": {}}
 ```
 
-Properties: `value`, `options` (nested `{value, label, children}`), `placeholder`, `style`
+`options` also accepts `{"path": ...}` for dynamic candidate lists (see ChoicePicker).
+
+Properties: `value`, `options` (nested `{value, label, children}` **or** `{"path": ...}`), `placeholder`, `style`
 
 ### `TreeSelect`
 
@@ -347,7 +367,9 @@ Tree-structured dropdown (Ant Design `TreeSelect`).
 {"id": "ts1", "component": "TreeSelect", "value": {"path": "/data/dept"}, "treeData": [{"value": "eng", "title": "Engineering", "children": [{"value": "fe", "title": "Frontend"}]}], "placeholder": "Select department", "multiple": false, "showSearch": true, "style": {}}
 ```
 
-Properties: `value`, `treeData` (nested `{value, title, children}`), `placeholder`, `multiple`, `showSearch`, `style`
+`treeData` also accepts `{"path": ...}` for dynamic candidate lists (see ChoicePicker).
+
+Properties: `value`, `treeData` (nested `{value, title, children}` **or** `{"path": ...}`), `placeholder`, `multiple`, `showSearch`, `style`
 
 ### `Transfer`
 
@@ -701,7 +723,7 @@ Unified chart component powered by ECharts.
 {"id": "chart1", "component": "Chart", "chartType": "bar", "data": {"path": "/data/chartData"}, "config": {"xField": "month", "yField": "revenue", "title": "Monthly Revenue"}, "height": 400, "width": "100%", "style": {}}
 ```
 
-`chartType` enum: `"bar" | "line" | "area" | "pie" | "donut" | "scatter" | "radar" | "heatmap" | "funnel" | "gauge" | "treemap" | "sunburst" | "sankey" | "graph" | "boxplot" | "candlestick" | "effectScatter" | "lines" | "themeRiver" | "bar_grouped"`
+`chartType` enum: `"bar" | "line" | "area" | "pie" | "donut" | "scatter" | "radar" | "heatmap" | "funnel" | "gauge" | "treemap" | "sunburst" | "sankey" | "graph" | "boxplot" | "candlestick" | "effectScatter" | "lines" | "themeRiver" | "bar_grouped" | "combo"`
 
 `data` structure (common):
 ```json
@@ -712,6 +734,39 @@ Unified chart component powered by ECharts.
 ```
 
 `config` common properties: `xField`, `yField`, `title`, `colorField`, `angleField`, `seriesField`
+
+#### `combo` chart type — multi-series / dual-axis
+
+Use `combo` when you need **multiple series on one chart** (e.g. bar + line) or **two Y axes** (e.g. cost on left, headcount on right). The other chart types are single-series only.
+
+`config` for `combo`:
+
+- `xField` — shared category field for the X axis (string)
+- `yAxes` — array of axis specs. Omit for a single default value axis. Each entry:
+  - `name` (string) — axis title, e.g. `"费用(万元)"`
+  - `position` (`"left"` | `"right"`) — default `"left"`. Use `"right"` for the secondary axis.
+  - `unit` (string) — optional suffix appended to tick labels, e.g. `"%"`
+- `series` — array of series specs, one per rendered series:
+  - `type` (`"bar"` | `"line"` | `"area"` | `"scatter"`)
+  - `name` (string) — series name (legend / tooltip)
+  - `field` (string) — data field whose values feed this series
+  - `yAxisIndex` (number) — `0` = left axis (default), `1` = right axis
+  - `color` (string, hex) — fixed color; omit for ECharts default palette
+  - `smooth` (boolean) — smooth the line (line/area only)
+  - `labelVisible` (boolean) — show value labels
+
+```json
+{"id": "chart1", "component": "Chart", "chartType": "combo", "data": {"path": "/data/positionStat"}, "config": {"xField": "position", "yAxes": [{"name": "费用(万元)", "position": "left"}, {"name": "人数", "position": "right"}], "series": [{"type": "bar", "name": "差旅费", "field": "cost", "yAxisIndex": 0, "color": "#1677ff", "labelVisible": true}, {"type": "line", "name": "人数", "field": "people", "yAxisIndex": 1, "color": "#722ed1", "smooth": true}]}, "height": 320, "width": "100%", "style": {}}
+```
+
+Data shape for the example above (one row per X category, one column per series field):
+
+```json
+[
+  {"position": "实施", "cost": 1073.82, "people": 420},
+  {"position": "研发", "cost": 886.11, "people": 380}
+]
+```
 
 Properties: `chartType`, `data`, `config`, `height`, `width`, `style`
 

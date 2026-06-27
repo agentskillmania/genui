@@ -14,7 +14,7 @@ import type { GenUIComponentProps } from '../types';
  * and avoids gutter-spacing bugs when Column has a background color.
  */
 export const Column: React.FC<GenUIComponentProps> = ({ properties, children }) => {
-  const { span, offset, push, pull, order, flex, style } = properties ?? {};
+  const { span, offset, push, pull, order, flex, gap = 12, style } = properties ?? {};
 
   return (
     <Col
@@ -29,7 +29,7 @@ export const Column: React.FC<GenUIComponentProps> = ({ properties, children }) 
       <div style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
+        gap: gap as number,
         flex: 1,
         ...(style as React.CSSProperties),
       }}>

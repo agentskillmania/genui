@@ -43,6 +43,30 @@ Relative path rules:
 - Nested field: `labels/availableLiters`
 - Do not write `labels.availableLiters`
 
+## Structured Array Property Binding
+
+Path binding is recursive: arrays are traversed, `{"path": ...}` is resolved, and plain objects walk each field. So **any structured array property** — not just `value`/`text` — can take a binding path. This is how dynamic candidate lists (options / treeData / items) stay data-driven instead of being hard-coded into the component tree.
+
+When candidate values come from a data source (DB query result, host-computed list, filter-dependent cascade) rather than a fixed design-time enum, bind the candidate-list property to a path and let the host refresh it via `updateDataModel`. The component re-renders automatically — no tree rebuild needed.
+
+```json
+{"id": "cp1", "component": "ChoicePicker", "mode": "multiple",
+ "options": {"path": "/filters/deptOptions"},
+ "value": {"path": "/filters/dept"}}
+```
+
+```json
+{"updateDataModel": {"path": "/filters", "value": {"deptOptions": [{"label": "销售", "value": "销售"}, {"label": "研发", "value": "研发"}], "dept": []}}}
+```
+
+Candidate-list attributes that commonly use this pattern:
+
+- `options` — `ChoicePicker`, `AutoComplete`, `Cascader` (array of `{label, value}` or nested)
+- `treeData` — `TreeSelect` (nested `{value, title, children}`)
+- `items` / `cards` / `contents` — advanced list components
+
+Rule of thumb: if a list of options is known at design time, use a literal array; if it depends on data, bind it with `{"path": ...}` and drive it through `updateDataModel`.
+
 ## Advanced Component List Binding
 
 For protocol-level compatibility understanding: list-type attributes in advanced components typically use a string path directly, and element field mapping uses relative paths:
