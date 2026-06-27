@@ -41,6 +41,8 @@ interface SurfaceComponentNodeProps {
   resolvedProperties: Record<string, unknown>;
   childTypes: string[];
   onAction: (action: string, context?: Record<string, unknown>) => void;
+  /** 上报输入组件的值变化（ChoicePicker/TextField/Slider 等），触发 engine.syncUIToData */
+  onSyncState: (change: Record<string, unknown>) => void;
   renderChild: (surfaceId: string, comp: AGenUIComponent) => React.ReactNode;
 }
 
@@ -48,11 +50,11 @@ interface SurfaceComponentNodeProps {
  * Memoized renderer for a single component node.
  *
  * Skips re-render when `resolvedProperties`, `childrenComps`, `childTypes`,
- * `comp`, `onAction`, or `renderChild` are referentially unchanged — which is
+ * `comp`, `onAction`, `onSyncState`, or `renderChild` are referentially unchanged — which is
  * the common case when only one surface's data model changed.
  */
 const SurfaceComponentNode = memo<SurfaceComponentNodeProps>(
-  ({ comp, childrenComps, resolvedProperties, childTypes, onAction, renderChild, surfaceId }) => {
+  ({ comp, childrenComps, resolvedProperties, childTypes, onAction, onSyncState, renderChild, surfaceId }) => {
     const renderer = getComponentRenderer(comp.component);
     if (!renderer) {
       console.warn(`[GenUI] Unknown component type: ${comp.component}`);
@@ -68,6 +70,7 @@ const SurfaceComponentNode = memo<SurfaceComponentNodeProps>(
           children: childrenComps.map((childComp) => renderChild(surfaceId, childComp)),
           childTypes,
           onAction,
+          onSyncState,
         })}
       </React.Fragment>
     );
@@ -126,6 +129,23 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
           }
           break;
         }
+        case 'updateDataModel': {
+          // dataModel 变了 → 触发重渲染，让组件重新解析 path 绑定取新值。
+          // 组件树结构不变，用新的对象引用触发 setSurfaces 即可。
+          const engine = surfaceManager.getEngine();
+          const surface = engine.getSurface(event.surfaceId);
+          if (surface) {
+            setSurfaces((prev) => {
+              const next = new Map(prev);
+              next.set(event.surfaceId, {
+                surfaceId: event.surfaceId,
+                components: surface.getRootComponents(),
+              });
+              return next;
+            });
+          }
+          break;
+        }
         case 'deleteSurface': {
           setSurfaces((prev) => {
             const next = new Map(prev);
@@ -154,6 +174,15 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
         sourceComponentId: componentId,
         context,
       });
+    },
+    [surfaceManager],
+  );
+
+  /** 输入组件值变化 → engine.syncUIToData（触发 syncUIToData 事件，宿主可监听） */
+  const handleComponentSync = useCallback(
+    (surfaceId: string, componentId: string, change: Record<string, unknown>) => {
+      const engine = surfaceManager.getEngine();
+      engine.syncUIToData(surfaceId, componentId, change);
     },
     [surfaceManager],
   );
@@ -189,6 +218,23 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
     [handleComponentAction],
   );
 
+  /** Cache of per-component-id syncState callbacks（同 action 模式，保证 memo 稳定引用） */
+  const syncCallbackCache = React.useRef<Map<string, (change: Record<string, unknown>) => void>>(new Map());
+
+  const getSyncCallback = useCallback(
+    (surfaceId: string, componentId: string) => {
+      const cacheKey = `${surfaceId}:${componentId}`;
+      let cb = syncCallbackCache.current.get(cacheKey);
+      if (!cb) {
+        cb = (change: Record<string, unknown>) =>
+          handleComponentSync(surfaceId, componentId, change);
+        syncCallbackCache.current.set(cacheKey, cb);
+      }
+      return cb;
+    },
+    [handleComponentSync],
+  );
+
   const renderComponent = useCallback(
     (surfaceId: string, comp: AGenUIComponent): React.ReactNode => {
       const { id, child, children, action, checks, ...properties } = comp;
@@ -213,11 +259,12 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
           resolvedProperties={resolvedProps}
           childTypes={childTypes}
           onAction={getActionCallback(surfaceId, id)}
+          onSyncState={getSyncCallback(surfaceId, id)}
           renderChild={renderComponent}
         />
       );
     },
-    [surfaceManager, getActionCallback],
+    [surfaceManager, getActionCallback, getSyncCallback],
   );
 
   const containerStyle: React.CSSProperties = {

@@ -11,6 +11,7 @@ export interface SurfaceEvent {
   type:
     | 'createSurface'
     | 'updateComponents'
+    | 'updateDataModel'
     | 'deleteSurface'
     | 'action'
     | 'syncUIToData'

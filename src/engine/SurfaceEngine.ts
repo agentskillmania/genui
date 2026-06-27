@@ -416,6 +416,8 @@ export class SurfaceEngine {
     const surface = this.surfaces.get(surfaceId);
     if (!surface) return;
     surface.updateDataModel(path, value);
+    // emit 事件，让 GenUISurface 触发重渲染，绑定 path 的组件才会取到新值
+    this.emit({ type: 'updateDataModel', surfaceId, payload: { path, value } });
   }
 
   /**
