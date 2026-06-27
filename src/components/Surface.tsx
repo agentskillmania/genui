@@ -168,10 +168,11 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   }, [surfaceManager, handleEvent]);
 
   const handleComponentAction = useCallback(
-    (surfaceId: string, componentId: string, _action: string, context?: Record<string, unknown>) => {
+    (surfaceId: string, componentId: string, action: string, context?: Record<string, unknown>) => {
       surfaceManager.submitUIAction({
         surfaceId,
         sourceComponentId: componentId,
+        action,
         context,
       });
     },

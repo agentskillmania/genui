@@ -434,17 +434,20 @@ export class SurfaceEngine {
 
   /**
    * Emit an `action` event for a user interaction on a component.
-   * No-op if the surface does not exist.
+   * The `action` name (e.g. "drilldownCity") lets the host route different
+   * interactions. No-op if the surface does not exist.
    */
   submitAction(
     surfaceId: string,
     componentId: string,
+    action: string,
     context?: Record<string, unknown>,
   ): void {
     if (!this.surfaces.has(surfaceId)) return;
     const payload: ActionEvent = {
       surfaceId,
       sourceComponentId: componentId,
+      action,
       context,
     };
     this.emit({ type: 'action', surfaceId, payload });

@@ -127,7 +127,7 @@ export class SurfaceManager {
    */
   submitUIAction(action: ActionEvent): void {
     this.ensureNotDisposed();
-    this.engine.submitAction(action.surfaceId, action.sourceComponentId, action.context);
+    this.engine.submitAction(action.surfaceId, action.sourceComponentId, action.action, action.context);
   }
 
   /**

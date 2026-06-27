@@ -100,6 +100,10 @@ export interface AGenUISurfaceState {
 export interface ActionEvent {
   surfaceId: string;
   sourceComponentId: string;
+  /** Action name (e.g. "drilldownCity") declared on the component via
+   *  rowClickAction / clickAction / buttonAction. Lets the host route
+   *  different interactions from the same surface. */
+  action: string;
   context?: Record<string, unknown>;
 }
 
