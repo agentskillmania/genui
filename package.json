@@ -72,5 +72,13 @@
     "echarts",
     "streaming-ui"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitee.com/agentskillmania/genui.git"
+  },
+  "bugs": {
+    "url": "https://gitee.com/agentskillmania/genui/issues"
+  },
+  "homepage": "https://gitee.com/agentskillmania/genui"
 }
