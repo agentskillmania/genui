@@ -12,8 +12,11 @@ import type { GenUIComponentProps } from '../types';
 export const ColorPicker: React.FC<GenUIComponentProps> = ({ properties, onSyncState }) => {
   const { value, disabled, showText, size, allowClear, style } = properties ?? {};
 
+  // BUG2 fix: antd ColorPicker onChange passes a single AggregationColor arg
+  // (not (color, hex)). Extract the hex string from the first argument.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleChange = (color: any, hex: string) => {
+  const handleChange = (color: any) => {
+    const hex = typeof color?.toHexString === 'function' ? color.toHexString() : String(color);
     onSyncState?.({ value: hex });
   };
 
