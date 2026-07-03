@@ -108,7 +108,7 @@ const BUILTIN_DESCRIPTIONS: Record<string, { description: string; properties?: R
   FloatButton: { description: 'Floating action button', properties: { icon: 'Button icon', tooltip: 'Tooltip text', type: 'default or primary' } },
 
   // Chart
-  Chart: { description: 'Interactive chart (bar, line, area, column, scatter, pie, donut, radar, gauge, rose, funnel, heatmap, treemap, sankey, boxplot, candlestick, sunburst, themeRiver, graph, parallel, pictorialBar, effectScatter)', properties: { chartType: 'Chart type string', data: 'Chart data array', config: 'Chart configuration (xField, yField, angleField, colorField, nodes, links, dimensions)' } },
+  Chart: { description: 'Interactive chart (bar, line, area, column, scatter, pie, donut, radar, gauge, rose, funnel, heatmap, treemap, sankey, boxplot, candlestick, sunburst, themeRiver, graph, parallel, pictorialBar, effectScatter)', properties: { chartType: 'Chart type string', data: 'Chart data array', config: 'Chart config: field mappings (xField, yField, angleField, colorField) + display overrides. Display: colors (palette string[]), grid ({left,right,top,bottom}), legendPosition (top|bottom|{top,left}), tooltip ({trigger:axis|item, template, formatter}), axisLabel ({rotate, unit}), visualMap ({min,max,colors} for heatmap), indicatorMax (number[] for radar). combo adds: series (ComboSeriesSpec[]), yAxes (ComboYAxisSpec[]). tooltip.formatter references a name registered via registerFormatter (built-in: percent, thousands; business presets like "万元" registered by host).' } },
 
   // Media
   Video: { description: 'Video player', properties: { url: 'Video URL', controls: 'Show controls' } },

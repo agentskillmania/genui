@@ -739,7 +739,38 @@ Unified chart component powered by ECharts.
 ]
 ```
 
-`config` common properties: `xField`, `yField`, `title`, `colorField`, `angleField`, `seriesField`
+`config` common properties:
+- **Field mappings** (required for data binding): `xField`, `yField` (bar/line/area/column/scatter/boxplot/candlestick/pictorialBar), `angleField` + `colorField` (pie/donut/rose/funnel/treemap), `colorField` (heatmap Y category), `title`
+- **Display overrides** (all optional, apply to any chart type):
+  - `colors` (string[]) — custom palette, overrides ECharts default. e.g. `["#8B7AAE", "#C9A961", "#7B95B0"]`
+  - `grid` ({left, right, top, bottom}) — chart canvas margins in px. e.g. `{"left": 48, "right": 24, "top": 16, "bottom": 32}`
+  - `legendPosition` (`"top"` | `"bottom"` | `{top, bottom, left}`) — legend placement. Default: ECharts default (top).
+  - `tooltip` ({trigger, template, formatter}) — tooltip control:
+    - `trigger`: `"axis"` (hover whole column, for bar/line/combo) | `"item"` (hover single slice, for pie)
+    - `template`: ECharts string template, e.g. `"{b}: {c}"`
+    - `formatter`: **name of a registered formatter preset** (see Formatter Registry below), e.g. `"percent"`, `"thousands"`, or a business preset like `"万元"`
+  - `axisLabel` ({rotate, unit}) — category axis label control: `rotate` (degrees, for long labels), `unit` (suffix string appended to value-axis ticks, e.g. `"万"`)
+  - `visualMap` ({min, max, colors}) — **heatmap only**. Overrides the default `min:0, max:100`. `colors` sets the color gradient (array of hex). e.g. `{"min": 0, "max": 5000, "colors": ["#e0f2fe", "#0c4a6e"]}`
+  - `indicatorMax` (number[]) — **radar only**. Per-dimension max value, overrides the default `100` for every dimension. e.g. `[3000, 500, 100, 50]` when dimensions have different scales.
+
+#### Formatter Registry
+
+`tooltip.formatter` references a **named preset** registered via `registerFormatter(name, fn)`. The DSL stays JSON-serializable (no inline functions); the host registers real functions that `buildEChartsOption` resolves at render time.
+
+Built-in presets:
+- `"percent"` — appends `%` to the value
+- `"thousands"` — formats the value with locale thousand separators
+
+Business presets (registered by the host application, not built into genui):
+- e.g. `"万元"` (formats as `"1,234.56 万元"`), `"人次"` (appends `人次`)
+
+To use a formatter, the host must register it before the chart renders. The DSL only references the name:
+
+```json
+{"config": {"xField": "dept", "yField": "cost", "tooltip": {"trigger": "axis", "formatter": "万元"}}}
+```
+
+If the name is not registered, ECharts falls back to its default formatter (raw value).
 
 #### `combo` chart type — multi-series / dual-axis
 
