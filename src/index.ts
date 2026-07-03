@@ -25,6 +25,15 @@ export {
   getRegisteredTypes,
 } from './components/registry';
 
+// ===== Chart formatter registry =====
+export {
+  registerFormatter,
+  getFormatter,
+  hasFormatter,
+  getRegisteredFormatters,
+} from './components/chart/formatterRegistry';
+export type { EChartsFormatter } from './components/chart/formatterRegistry';
+
 // ===== Tools =====
 export { validateA2UIMessage, classifyA2UIEvent, componentSchema, A2UI_VERSION } from './tools/schemaValidator';
 export { exportCatalog } from './tools/catalogExport';

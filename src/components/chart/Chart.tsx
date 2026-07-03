@@ -42,6 +42,101 @@ import {
 } from 'echarts/components';
 import { CanvasRenderer } from 'echarts/renderers';
 import type { GenUIComponentProps } from '../types';
+import { getFormatter } from './formatterRegistry';
+
+// ===== Config field type helpers =====
+
+/** Chart color palette override. */
+type ColorsConfig = string[];
+
+/** Grid (chart canvas) margins. */
+interface GridConfig {
+  left?: number;
+  right?: number;
+  top?: number;
+  bottom?: number;
+}
+
+/** Legend placement. Either a preset position string or an explicit offset object. */
+type LegendPositionConfig = 'top' | 'bottom' | { top?: number; bottom?: number; left?: string };
+
+/** Tooltip config: trigger + either a string template or a registered formatter name. */
+interface TooltipConfig {
+  trigger?: 'item' | 'axis';
+  /** ECharts string template, e.g. "{b}: {c}". */
+  template?: string;
+  /** Name of a formatter registered via `registerFormatter`. */
+  formatter?: string;
+}
+
+/** Axis label config: rotation + unit suffix. */
+interface AxisLabelConfig {
+  /** Label rotation in degrees (e.g. 20 for department names). */
+  rotate?: number;
+  /** Unit suffix appended to each tick label, e.g. "万". */
+  unit?: string;
+}
+
+/** visualMap config for heatmap: range + optional color stops. */
+interface VisualMapConfig {
+  min?: number;
+  max?: number;
+  /** Color gradient stops, e.g. ["#e0f2fe", "#0c4a6e"]. */
+  colors?: string[];
+}
+
+// ===== Resolver helpers (pure functions, no mutation) =====
+
+/** Build the ECharts `tooltip` object from config, resolving formatter by name. */
+function resolveTooltip(tooltipConfig: TooltipConfig | undefined): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  if (tooltipConfig?.trigger) {
+    result.trigger = tooltipConfig.trigger;
+  }
+  if (tooltipConfig?.template) {
+    result.formatter = tooltipConfig.template;
+  } else if (tooltipConfig?.formatter) {
+    // Look up a registered formatter by name; fall back to nothing if unregistered
+    // (ECharts will then use its default formatter).
+    const fn = getFormatter(tooltipConfig.formatter);
+    if (fn) {
+      result.formatter = fn;
+    }
+  }
+  return result;
+}
+
+/** Build the ECharts `legend` object from a position config. */
+function resolveLegend(position: LegendPositionConfig | undefined): Record<string, unknown> {
+  if (!position) return {};
+  if (position === 'top') return { top: 0 };
+  if (position === 'bottom') return { bottom: 0 };
+  // Explicit offset object
+  return { ...position };
+}
+
+/** Build the ECharts `grid` object from a margins config. */
+function resolveGrid(grid: GridConfig | undefined): Record<string, unknown> | undefined {
+  if (!grid) return undefined;
+  const result: Record<string, unknown> = {};
+  if (grid.left !== undefined) result.left = grid.left;
+  if (grid.right !== undefined) result.right = grid.right;
+  if (grid.top !== undefined) result.top = grid.top;
+  if (grid.bottom !== undefined) result.bottom = grid.bottom;
+  result.containLabel = true;
+  return result;
+}
+
+/** Build the ECharts axisLabel object from config (applied to category axes). */
+function resolveAxisLabel(axisLabel: AxisLabelConfig | undefined): Record<string, unknown> | undefined {
+  if (!axisLabel) return undefined;
+  const result: Record<string, unknown> = {};
+  if (axisLabel.rotate !== undefined) result.rotate = axisLabel.rotate;
+  if (axisLabel.unit) {
+    result.formatter = `{value}${axisLabel.unit}`;
+  }
+  return result;
+}
 
 // Register only the ECharts modules we use (tree-shaking friendly)
 echarts.use([
@@ -151,6 +246,14 @@ export function buildEChartsOption(
     stack,
     legendVisible = true,
     tooltipVisible = true,
+    // ===== Display & formatting overrides =====
+    colors,
+    grid,
+    legendPosition,
+    tooltip,
+    axisLabel,
+    visualMap,
+    indicatorMax,
   } = config;
 
   const xKey = xField as string | undefined;
@@ -161,9 +264,20 @@ export function buildEChartsOption(
   // Category names from xField for cartesian charts
   const categories = xKey ? data.map((d) => String(d[xKey] ?? '')) : [];
 
+  // Shared axisLabel config (applied to category axes of cartesian charts)
+  const resolvedAxisLabel = resolveAxisLabel(axisLabel as AxisLabelConfig | undefined);
+  const categoryAxisData = { type: 'category' as const, data: categories, axisLabel: resolvedAxisLabel };
+  const categoryAxisY = { type: 'category' as const, data: categories, axisLabel: resolvedAxisLabel };
+  const valueAxisWithUnit = (unit?: string) => ({
+    type: 'value' as const,
+    axisLabel: unit ? { formatter: `{value}${unit}` } : undefined,
+  });
+
   const baseOption: Partial<echarts.EChartsCoreOption> = {
-    tooltip: tooltipVisible ? {} : undefined,
-    legend: legendVisible ? {} : undefined,
+    ...(colors ? { color: colors as ColorsConfig } : {}),
+    tooltip: tooltipVisible ? resolveTooltip(tooltip as TooltipConfig | undefined) : undefined,
+    legend: legendVisible ? resolveLegend(legendPosition as LegendPositionConfig | undefined) : undefined,
+    grid: resolveGrid(grid as GridConfig | undefined),
   };
 
   if (title) {
@@ -175,7 +289,7 @@ export function buildEChartsOption(
     case 'bar_grouped':
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: { type: 'value' },
         series: buildBarSeries(data, xKey, yKey, colorKey, chartType === 'bar_grouped'),
       };
@@ -184,7 +298,7 @@ export function buildEChartsOption(
       return {
         ...baseOption,
         xAxis: { type: 'value' },
-        yAxis: { type: 'category', data: categories },
+        yAxis: categoryAxisY,
         series: [{
           type: 'bar',
           data: yKey ? data.map((d) => d[yKey] as number) : [],
@@ -194,7 +308,7 @@ export function buildEChartsOption(
     case 'line':
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: { type: 'value' },
         series: [{
           type: 'line',
@@ -206,7 +320,7 @@ export function buildEChartsOption(
     case 'area':
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: { type: 'value' },
         series: [{
           type: 'line',
@@ -278,7 +392,10 @@ export function buildEChartsOption(
       return {
         ...baseOption,
         radar: {
-          indicator: categories.map((name) => ({ name, max: 100 })),
+          indicator: categories.map((name, i) => ({
+            name,
+            max: (indicatorMax as number[] | undefined)?.[i] ?? 100,
+          })),
         },
         series: [{
           type: 'radar',
@@ -318,7 +435,16 @@ export function buildEChartsOption(
         ...baseOption,
         xAxis: { type: 'category', data: categories },
         yAxis: { type: 'category', data: colorKey ? [...new Set(data.map((d) => String(d[colorKey] ?? '')))] : [] },
-        visualMap: { min: 0, max: 100, calculable: true },
+        visualMap: (visualMap as VisualMapConfig | undefined)
+          ? {
+              min: (visualMap as VisualMapConfig).min ?? 0,
+              max: (visualMap as VisualMapConfig).max ?? 100,
+              calculable: true,
+              ...((visualMap as VisualMapConfig).colors
+                ? { inRange: { color: (visualMap as VisualMapConfig).colors } }
+                : {}),
+            }
+          : { min: 0, max: 100, calculable: true },
         series: [{
           type: 'heatmap',
           data: data.map((d) => [
@@ -348,7 +474,7 @@ export function buildEChartsOption(
       // Render a bar-chart placeholder when the extension is not registered.
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: { type: 'value' },
         series: [{
           type: 'bar',
@@ -371,7 +497,7 @@ export function buildEChartsOption(
     case 'boxplot':
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: { type: 'value' },
         series: [{
           type: 'boxplot',
@@ -382,7 +508,7 @@ export function buildEChartsOption(
     case 'candlestick':
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: { type: 'value' },
         series: [{
           type: 'candlestick',
@@ -444,7 +570,7 @@ export function buildEChartsOption(
     case 'pictorialBar':
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: { type: 'value' },
         series: [{
           type: 'pictorialBar',
@@ -507,7 +633,7 @@ export function buildEChartsOption(
 
       return {
         ...baseOption,
-        xAxis: { type: 'category', data: categories },
+        xAxis: categoryAxisData,
         yAxis: yAxisList,
         series,
       };
