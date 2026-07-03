@@ -16,7 +16,7 @@ export default defineConfig({
       fileName: (format) => `genui.${format}.js`,
     },
     rollupOptions: {
-      external: ['react', 'react-dom', 'antd', 'echarts'],
+      external: ['react', 'react-dom', 'antd', '@ant-design/icons', 'echarts'],
       output: {
         globals: {
           react: 'React',
