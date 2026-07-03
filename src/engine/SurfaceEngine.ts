@@ -299,6 +299,47 @@ export class SurfaceState {
     return (handler as (params: Record<string, unknown>) => unknown)(resolvedArgs);
   }
 
+  // ---- Sync (controlled-input write-back) ----
+
+  /**
+   * Apply a sync change from a component back to the data model.
+   *
+   * BUG1 fix: when a controlled component calls onSyncState({ value: "new" }),
+   * the change must be written to the data model at the path bound to `value`.
+   * This method looks up the component's ORIGINAL (un-resolved) properties,
+   * finds { path: "..." } bindings for each change key, and writes the new
+   * value to the data model at that path.
+   *
+   * Change keys without a path binding are silently ignored (the syncUIToData
+   * event is still emitted so the host can handle them).
+   *
+   * @returns true if any data model value was changed
+   */
+  applySyncChange(componentId: string, change: Record<string, unknown>): boolean {
+    const comp = this.components.get(componentId);
+    if (!comp) return false;
+
+    let changed = false;
+    for (const [key, newValue] of Object.entries(change)) {
+      // Check if this key in the original properties has a { path: "..." } binding
+      const rawValue = (comp as Record<string, unknown>)[key];
+      if (
+        rawValue !== null &&
+        typeof rawValue === 'object' &&
+        !Array.isArray(rawValue) &&
+        'path' in (rawValue as Record<string, unknown>)
+      ) {
+        const path = (rawValue as { path: string }).path;
+        const segments = path.startsWith('/')
+          ? splitPointer(path, true)
+          : path.split('.');
+        setByPath(this.dataModel, segments, newValue);
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
   // ---- Theme ----
 
   /** Returns a shallow copy of the theme configuration. */
@@ -462,13 +503,25 @@ export class SurfaceEngine {
     componentId: string,
     change: Record<string, unknown>,
   ): void {
-    if (!this.surfaces.has(surfaceId)) return;
+    const surface = this.surfaces.get(surfaceId);
+    if (!surface) return;
+
+    // BUG1 fix: write the change to the data model at the bound path.
+    const changed = surface.applySyncChange(componentId, change);
+
+    // Emit the sync event (host can listen for non-bound changes)
     const payload: SyncUIToDataEvent = {
       surfaceId,
       componentId,
       change,
     };
     this.emit({ type: 'syncUIToData', surfaceId, payload });
+
+    // If the data model changed, emit updateDataModel so Surface re-renders.
+    // This closes the controlled-input loop: type → write dataModel → re-render.
+    if (changed) {
+      this.emit({ type: 'updateDataModel', surfaceId, payload: { componentId, change } });
+    }
   }
 
   // ---- Event bus ----
