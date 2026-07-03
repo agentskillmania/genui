@@ -156,4 +156,34 @@ describe('catalogExport (A2UI v0.9)', () => {
       expect(catalog.description).toContain('2.0.0');
     });
   });
+
+  // ---- BUG3: $ref must point to real definitions ----
+
+  describe('BUG3: anyComponent $ref resolves to actual definitions', () => {
+    it('every $ref in anyComponent.oneOf points to a component that exists', () => {
+      const catalog = exportCatalog();
+      const anyComp = catalog.$defs.anyComponent as Record<string, unknown>;
+      const refs = anyComp.oneOf as Array<{ $ref: string }>;
+
+      for (const ref of refs) {
+        // Resolve the JSON pointer: #/components/Text → catalog.components.Text
+        const pointer = ref.$ref.replace(/^#\//, '');
+        const parts = pointer.split('/');
+        let target: unknown = catalog;
+        for (const part of parts) {
+          target = (target as Record<string, unknown>)[part];
+        }
+        expect(target).toBeDefined();
+      }
+    });
+
+    it('$ref does NOT point to non-existent componentSchemas', () => {
+      const catalog = exportCatalog();
+      const anyComp = catalog.$defs.anyComponent as Record<string, unknown>;
+      const refs = anyComp.oneOf as Array<{ $ref: string }>;
+      for (const ref of refs) {
+        expect(ref.$ref).not.toContain('componentSchemas');
+      }
+    });
+  });
 });

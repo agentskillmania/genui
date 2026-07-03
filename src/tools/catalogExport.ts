@@ -229,8 +229,11 @@ export function exportCatalog(name = 'genui-antd', version = '0.1.0'): A2UICatal
     components[type] = buildComponentSchema(type, { description, properties });
   }
 
-  // Build anyComponent $def using oneOf with discriminator
-  const anyComponentRefs = types.map((type) => ({ $ref: `#/$defs/componentSchemas/${type}` }));
+  // BUG3 fix: $ref must point to where component schemas actually live.
+  // Components are under `#/components/${type}` (the root-level `components`
+  // key built above), NOT `#/$defs/componentSchemas/${type}` which never
+  // existed — all refs were dangling, making the entire schema invalid.
+  const anyComponentRefs = types.map((type) => ({ $ref: `#/components/${type}` }));
 
   return {
     $schema: 'https://json-schema.org/draft/2020-12/schema',
