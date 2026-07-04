@@ -29,7 +29,8 @@
     "test:coverage": "vitest run --coverage",
     "lint": "tsc --noEmit",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "prepare": "husky"
   },
   "peerDependencies": {
     "@ant-design/icons": "^6.0.0",
@@ -46,6 +47,7 @@
     "zod": "^3.24.0"
   },
   "devDependencies": {
+    "@ant-design/icons": "^6.3.2",
     "@storybook/addon-essentials": "^8.6.0",
     "@storybook/addon-interactions": "^8.6.0",
     "@storybook/blocks": "^8.6.0",
@@ -57,6 +59,9 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.2.0",
     "@vitest/coverage-v8": "^1.6.1",
+    "antd": "^6.5.0",
+    "echarts": "^5.6.0",
+    "husky": "^9.1.7",
     "jsdom": "^29.1.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

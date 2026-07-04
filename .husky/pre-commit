@@ -1,0 +1,24 @@
+echo "Running pre-commit checks..."
+
+# 1. 单元测试
+echo "▶ Running unit tests..."
+if ! npm test; then
+    echo "❌ Unit tests failed. Commit aborted."
+    exit 1
+fi
+
+# 2. 类型检查（tsc --noEmit）
+echo "▶ Running type check..."
+if ! npm run lint; then
+    echo "❌ Type check failed. Commit aborted."
+    exit 1
+fi
+
+# 3. build 验证
+echo "▶ Running build..."
+if ! npm run build; then
+    echo "❌ Build failed. Commit aborted."
+    exit 1
+fi
+
+echo "✅ All checks passed. Proceeding with commit..."
