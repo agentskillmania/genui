@@ -3,12 +3,12 @@
  * Renders the full A2UI component tree for all active surfaces.
  */
 
-import React, { useEffect, useState, useCallback, memo } from 'react';
-import { ConfigProvider, theme as antdTheme } from 'antd';
-import type { SurfaceManager } from '../SurfaceManager';
-import type { SurfaceEvent } from '../engine/types';
-import type { AGenUIComponent, ActionEvent } from '../types/sdk';
-import { getComponentRenderer } from './registry';
+import React, { useEffect, useState, useCallback, memo } from "react";
+import { ConfigProvider, theme as antdTheme } from "antd";
+import type { SurfaceManager } from "../SurfaceManager";
+import type { SurfaceEvent } from "../engine/types";
+import type { AGenUIComponent, ActionEvent } from "../types/sdk";
+import { getComponentRenderer } from "./registry";
 
 export interface GenUISurfaceProps {
   surfaceManager: SurfaceManager;
@@ -54,7 +54,16 @@ interface SurfaceComponentNodeProps {
  * the common case when only one surface's data model changed.
  */
 const SurfaceComponentNode = memo<SurfaceComponentNodeProps>(
-  ({ comp, childrenComps, resolvedProperties, childTypes, onAction, onSyncState, renderChild, surfaceId }) => {
+  ({
+    comp,
+    childrenComps,
+    resolvedProperties,
+    childTypes,
+    onAction,
+    onSyncState,
+    renderChild,
+    surfaceId,
+  }) => {
     const renderer = getComponentRenderer(comp.component);
     if (!renderer) {
       console.warn(`[GenUI] Unknown component type: ${comp.component}`);
@@ -67,7 +76,9 @@ const SurfaceComponentNode = memo<SurfaceComponentNodeProps>(
           id: comp.id,
           component: comp.component,
           properties: resolvedProperties,
-          children: childrenComps.map((childComp) => renderChild(surfaceId, childComp)),
+          children: childrenComps.map((childComp) =>
+            renderChild(surfaceId, childComp),
+          ),
           childTypes,
           onAction,
           onSyncState,
@@ -76,12 +87,12 @@ const SurfaceComponentNode = memo<SurfaceComponentNodeProps>(
     );
   },
 );
-SurfaceComponentNode.displayName = 'SurfaceComponentNode';
+SurfaceComponentNode.displayName = "SurfaceComponentNode";
 
 export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   surfaceManager,
-  width = '100%',
-  height = '100%',
+  width = "100%",
+  height = "100%",
   onAction,
   onInteractionStatus: _onInteractionStatus,
   style,
@@ -103,18 +114,42 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
     return initial;
   });
 
+  // G5: per-component callback caches. Declared early (before handleEvent)
+  // so the deleteSurface handler can purge entries when a surface is torn
+  // down, preventing unbounded growth across surface create/delete cycles.
+  const actionCallbackCache = React.useRef<
+    Map<string, (action: string, context?: Record<string, unknown>) => void>
+  >(new Map());
+  const syncCallbackCache = React.useRef<
+    Map<string, (change: Record<string, unknown>) => void>
+  >(new Map());
+
+  /** Remove all cached callbacks belonging to a surface (G5 leak fix). */
+  const purgeSurfaceCallbacks = useCallback((surfaceId: string) => {
+    const prefix = `${surfaceId}:`;
+    for (const key of actionCallbackCache.current.keys()) {
+      if (key.startsWith(prefix)) actionCallbackCache.current.delete(key);
+    }
+    for (const key of syncCallbackCache.current.keys()) {
+      if (key.startsWith(prefix)) syncCallbackCache.current.delete(key);
+    }
+  }, []);
+
   const handleEvent = useCallback(
     (event: SurfaceEvent) => {
       switch (event.type) {
-        case 'createSurface': {
+        case "createSurface": {
           setSurfaces((prev) => {
             const next = new Map(prev);
-            next.set(event.surfaceId, { surfaceId: event.surfaceId, components: [] });
+            next.set(event.surfaceId, {
+              surfaceId: event.surfaceId,
+              components: [],
+            });
             return next;
           });
           break;
         }
-        case 'updateComponents': {
+        case "updateComponents": {
           const engine = surfaceManager.getEngine();
           const surface = engine.getSurface(event.surfaceId);
           if (surface) {
@@ -129,7 +164,7 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
           }
           break;
         }
-        case 'updateDataModel': {
+        case "updateDataModel": {
           // dataModel 变了 → 触发重渲染，让组件重新解析 path 绑定取新值。
           // 组件树结构不变，用新的对象引用触发 setSurfaces 即可。
           const engine = surfaceManager.getEngine();
@@ -146,20 +181,24 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
           }
           break;
         }
-        case 'deleteSurface': {
+        case "deleteSurface": {
           setSurfaces((prev) => {
             const next = new Map(prev);
             next.delete(event.surfaceId);
             return next;
           });
+          // G5: purge per-component callback cache entries for this surface
+          // so the refs don't accumulate stale closures across a long session
+          // of surface create/delete.
+          purgeSurfaceCallbacks(event.surfaceId);
           break;
         }
-        case 'action':
+        case "action":
           onAction?.(event.payload as ActionEvent);
           break;
       }
     },
-    [surfaceManager, onAction],
+    [surfaceManager, onAction, purgeSurfaceCallbacks],
   );
 
   useEffect(() => {
@@ -168,7 +207,12 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   }, [surfaceManager, handleEvent]);
 
   const handleComponentAction = useCallback(
-    (surfaceId: string, componentId: string, action: string, context?: Record<string, unknown>) => {
+    (
+      surfaceId: string,
+      componentId: string,
+      action: string,
+      context?: Record<string, unknown>,
+    ) => {
       surfaceManager.submitUIAction({
         surfaceId,
         sourceComponentId: componentId,
@@ -181,7 +225,11 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
 
   /** 输入组件值变化 → engine.syncUIToData（触发 syncUIToData 事件，宿主可监听） */
   const handleComponentSync = useCallback(
-    (surfaceId: string, componentId: string, change: Record<string, unknown>) => {
+    (
+      surfaceId: string,
+      componentId: string,
+      change: Record<string, unknown>,
+    ) => {
       const engine = surfaceManager.getEngine();
       engine.syncUIToData(surfaceId, componentId, change);
     },
@@ -189,21 +237,17 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   );
 
   const getThemeMode = useCallback(
-    (surfaceId: string): 'light' | 'dark' | undefined => {
+    (surfaceId: string): "light" | "dark" | undefined => {
       const engine = surfaceManager.getEngine();
       const surface = engine.getSurface(surfaceId);
       if (surface) {
         const theme = surface.getTheme();
-        return theme?.mode as 'light' | 'dark' | undefined;
+        return theme?.mode as "light" | "dark" | undefined;
       }
       return undefined;
     },
     [surfaceManager],
   );
-
-  // Cache of per-component-id action callbacks. Each node gets a stable
-  // callback keyed by its id, so React.memo can skip unchanged siblings.
-  const actionCallbackCache = React.useRef<Map<string, (action: string, context?: Record<string, unknown>) => void>>(new Map());
 
   const getActionCallback = useCallback(
     (surfaceId: string, componentId: string) => {
@@ -218,9 +262,6 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
     },
     [handleComponentAction],
   );
-
-  /** Cache of per-component-id syncState callbacks（同 action 模式，保证 memo 稳定引用） */
-  const syncCallbackCache = React.useRef<Map<string, (change: Record<string, unknown>) => void>>(new Map());
 
   const getSyncCallback = useCallback(
     (surfaceId: string, componentId: string) => {
@@ -271,22 +312,23 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   const containerStyle: React.CSSProperties = {
     width,
     height,
-    overflow: 'auto',
+    overflow: "auto",
     ...style,
   };
 
   return (
-    <div className={`genui-surface ${className || ''}`} style={containerStyle}>
+    <div className={`genui-surface ${className || ""}`} style={containerStyle}>
       {Array.from(surfaces.values()).map((surface) => {
         const mode = getThemeMode(surface.surfaceId);
-        const antdThemeConfig = mode === 'dark'
-          ? { algorithm: antdTheme.darkAlgorithm }
-          : undefined;
+        const antdThemeConfig =
+          mode === "dark" ? { algorithm: antdTheme.darkAlgorithm } : undefined;
 
         return (
           <ConfigProvider key={surface.surfaceId} theme={antdThemeConfig}>
             <div className="genui-surface-instance">
-              {surface.components.map((component) => renderComponent(surface.surfaceId, component))}
+              {surface.components.map((component) =>
+                renderComponent(surface.surfaceId, component),
+              )}
             </div>
           </ConfigProvider>
         );
@@ -295,4 +337,4 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   );
 };
 
-GenUISurface.displayName = 'GenUISurface';
+GenUISurface.displayName = "GenUISurface";
