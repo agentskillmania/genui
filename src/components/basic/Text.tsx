@@ -2,7 +2,7 @@ import React from 'react';
 import { Typography } from 'antd';
 import type { GenUIComponentProps } from '../types';
 
-const { Text: AntText, Title, Paragraph } = Typography;
+const { Text: AntText, Title } = Typography;
 
 /**
  * Text component — renders plain or heading text via Ant Design Typography.

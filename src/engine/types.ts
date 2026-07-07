@@ -15,7 +15,6 @@ export interface SurfaceEvent {
     | 'deleteSurface'
     | 'action'
     | 'syncUIToData'
-    | 'interactionStatus'
     | 'surfaceSizeChanged';
   surfaceId: string;
   payload?: unknown;

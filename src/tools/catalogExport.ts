@@ -134,7 +134,7 @@ function buildComponentSchema(name: string, entry: { description: string; proper
     }
   }
 
-  const required = entry.properties ? ['component'] : ['component'];
+  const required = ['component'];
 
   return {
     type: 'object',
