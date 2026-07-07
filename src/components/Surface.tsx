@@ -26,6 +26,26 @@ interface SurfaceState {
 }
 
 /**
+ * Look up a cached callback by `${surfaceId}:${componentId}`, creating and
+ * storing it via `factory` on first access. Shared by the action and sync
+ * callback caches so React.memo sees stable callback references.
+ */
+function getOrCreateCallback<T>(
+  cache: Map<string, T>,
+  surfaceId: string,
+  componentId: string,
+  factory: () => T,
+): T {
+  const cacheKey = `${surfaceId}:${componentId}`;
+  let cb = cache.get(cacheKey);
+  if (!cb) {
+    cb = factory();
+    cache.set(cacheKey, cb);
+  }
+  return cb;
+}
+
+/**
  * Props for a single memoized component node in the rendered tree.
  *
  * `onAction` is keyed by component id so each node receives a stable callback
@@ -135,6 +155,29 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
     }
   }, []);
 
+  /**
+   * Re-snapshot a surface's root components into state. Shared by
+   * updateComponents and updateDataModel — both need a fresh component
+   * array (and a new object reference) to trigger a re-render.
+   */
+  const refreshSurfaceComponents = useCallback(
+    (surfaceId: string) => {
+      const engine = surfaceManager.getEngine();
+      const surface = engine.getSurface(surfaceId);
+      if (surface) {
+        setSurfaces((prev) => {
+          const next = new Map(prev);
+          next.set(surfaceId, {
+            surfaceId,
+            components: surface.getRootComponents(),
+          });
+          return next;
+        });
+      }
+    },
+    [surfaceManager],
+  );
+
   const handleEvent = useCallback(
     (event: SurfaceEvent) => {
       switch (event.type) {
@@ -150,35 +193,13 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
           break;
         }
         case "updateComponents": {
-          const engine = surfaceManager.getEngine();
-          const surface = engine.getSurface(event.surfaceId);
-          if (surface) {
-            setSurfaces((prev) => {
-              const next = new Map(prev);
-              next.set(event.surfaceId, {
-                surfaceId: event.surfaceId,
-                components: surface.getRootComponents(),
-              });
-              return next;
-            });
-          }
+          refreshSurfaceComponents(event.surfaceId);
           break;
         }
         case "updateDataModel": {
           // dataModel 变了 → 触发重渲染，让组件重新解析 path 绑定取新值。
           // 组件树结构不变，用新的对象引用触发 setSurfaces 即可。
-          const engine = surfaceManager.getEngine();
-          const surface = engine.getSurface(event.surfaceId);
-          if (surface) {
-            setSurfaces((prev) => {
-              const next = new Map(prev);
-              next.set(event.surfaceId, {
-                surfaceId: event.surfaceId,
-                components: surface.getRootComponents(),
-              });
-              return next;
-            });
-          }
+          refreshSurfaceComponents(event.surfaceId);
           break;
         }
         case "deleteSurface": {
@@ -198,7 +219,12 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
           break;
       }
     },
-    [surfaceManager, onAction, purgeSurfaceCallbacks],
+    [
+      surfaceManager,
+      onAction,
+      purgeSurfaceCallbacks,
+      refreshSurfaceComponents,
+    ],
   );
 
   useEffect(() => {
@@ -250,30 +276,28 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
   );
 
   const getActionCallback = useCallback(
-    (surfaceId: string, componentId: string) => {
-      const cacheKey = `${surfaceId}:${componentId}`;
-      let cb = actionCallbackCache.current.get(cacheKey);
-      if (!cb) {
-        cb = (action: string, context?: Record<string, unknown>) =>
-          handleComponentAction(surfaceId, componentId, action, context);
-        actionCallbackCache.current.set(cacheKey, cb);
-      }
-      return cb;
-    },
+    (surfaceId: string, componentId: string) =>
+      getOrCreateCallback(
+        actionCallbackCache.current,
+        surfaceId,
+        componentId,
+        () =>
+          (action: string, context?: Record<string, unknown>) =>
+            handleComponentAction(surfaceId, componentId, action, context),
+      ),
     [handleComponentAction],
   );
 
   const getSyncCallback = useCallback(
-    (surfaceId: string, componentId: string) => {
-      const cacheKey = `${surfaceId}:${componentId}`;
-      let cb = syncCallbackCache.current.get(cacheKey);
-      if (!cb) {
-        cb = (change: Record<string, unknown>) =>
-          handleComponentSync(surfaceId, componentId, change);
-        syncCallbackCache.current.set(cacheKey, cb);
-      }
-      return cb;
-    },
+    (surfaceId: string, componentId: string) =>
+      getOrCreateCallback(
+        syncCallbackCache.current,
+        surfaceId,
+        componentId,
+        () =>
+          (change: Record<string, unknown>) =>
+            handleComponentSync(surfaceId, componentId, change),
+      ),
     [handleComponentSync],
   );
 
