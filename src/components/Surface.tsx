@@ -344,8 +344,12 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
     <div className={`genui-surface ${className || ""}`} style={containerStyle}>
       {Array.from(surfaces.values()).map((surface) => {
         const mode = getThemeMode(surface.surfaceId);
-        const antdThemeConfig =
-          mode === "dark" ? { algorithm: antdTheme.darkAlgorithm } : undefined;
+        const antdThemeConfig = {
+          algorithm: [
+            antdTheme.compactAlgorithm,
+            ...(mode === "dark" ? [antdTheme.darkAlgorithm] : []),
+          ],
+        };
 
         return (
           <ConfigProvider key={surface.surfaceId} theme={antdThemeConfig}>

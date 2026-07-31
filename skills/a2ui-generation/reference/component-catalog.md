@@ -193,7 +193,7 @@ Plain or heading text (Ant Design `Typography`).
 {"id": "t1", "component": "Text", "text": {"path": "/data/title"}, "variant": "h2", "color": "#333", "strong": true, "italic": false, "underline": false, "style": {}}
 ```
 
-Properties: `text` (string or path binding), `variant` (`h1|h2|h3|h4|h5|body|caption`), `color`, `strong`, `italic`, `underline`, `delete`, `style`
+Properties: `text` (string or path binding), `variant` (`h1|h2|h3|h4|h5|caption`; omit for body text), `color`, `strong`, `italic`, `underline`, `delete`, `style`
 
 ### `Image`
 
@@ -459,7 +459,7 @@ Status badge / count indicator (Ant Design `Badge`).
 {"id": "bdg1", "component": "Badge", "count": 5, "dot": false, "status": "processing", "color": "#1677ff", "text": "New", "overflow": 99, "style": {}}
 ```
 
-Properties: `count`, `dot`, `status` (`success|processing|error|default|warning`), `color`, `text`, `overflow`, `style`
+Properties: `count`, `dot`, `status` (`success|processing|error|default|warning`), `color`, `text`, `overflowCount`, `style`
 
 ### `Statistic`
 
@@ -506,10 +506,10 @@ Properties: `value`, `fullscreen`, `mode` (`month|year`), `style`
 Tree view (Ant Design `Tree`).
 
 ```json
-{"id": "tree1", "component": "Tree", "treeData": [{"key": "1", "title": "Root", "children": [{"key": "2", "title": "Child"}]}, "style": {}}
+{"id": "tree1", "component": "Tree", "treeData": [{"key": "1", "title": "Root", "children": [{"key": "2", "title": "Child"}]}], "checkable": true, "selectable": true, "style": {}}
 ```
 
-Properties: `treeData` (nested `{key, title, children}`), `style`
+Properties: `treeData` (nested `{key, title, children}`), `checkable`, `selectable`, `checkedKeys`, `selectedKeys`, `defaultExpandAll`, `showLine`, `showIcon`, `multiple`, `style`
 
 ---
 
@@ -729,7 +729,7 @@ Unified chart component powered by ECharts.
 {"id": "chart1", "component": "Chart", "chartType": "bar", "data": {"path": "/data/chartData"}, "config": {"xField": "month", "yField": "revenue", "title": "Monthly Revenue"}, "height": 400, "width": "100%", "style": {}}
 ```
 
-`chartType` enum: `"bar" | "line" | "area" | "pie" | "donut" | "scatter" | "radar" | "heatmap" | "funnel" | "gauge" | "treemap" | "sunburst" | "sankey" | "graph" | "boxplot" | "candlestick" | "effectScatter" | "lines" | "themeRiver" | "bar_grouped" | "combo"`
+`chartType` enum: `"bar" | "line" | "area" | "column" | "pie" | "donut" | "rose" | "scatter" | "radar" | "heatmap" | "funnel" | "gauge" | "treemap" | "sunburst" | "sankey" | "graph" | "boxplot" | "candlestick" | "wordCloud" | "parallel" | "pictorialBar" | "effectScatter" | "themeRiver" | "bar_grouped" | "combo"`
 
 `data` structure (common):
 ```json

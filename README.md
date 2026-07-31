@@ -60,7 +60,7 @@ function MyApp() {
       components: [
         { id: 'root', component: 'Card', children: ['title', 'body'], bordered: true },
         { id: 'title', component: 'Text', text: { path: '/title' }, variant: 'h3' },
-        { id: 'body', component: 'Text', text: { path: '/description' }, variant: 'body' },
+        { id: 'body', component: 'Text', text: { path: '/description' } },
       ],
     },
   });
