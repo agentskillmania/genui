@@ -1,6 +1,6 @@
 {
   "name": "@agentskillmania/genui",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A2UI v0.9 compatible generative UI engine — renders streaming A2UI protocol as React components via Ant Design 6 + ECharts",
   "type": "module",
   "main": "./dist/genui.cjs.js",
