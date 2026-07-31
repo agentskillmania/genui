@@ -11,7 +11,8 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/genui.es.js",
       "require": "./dist/genui.cjs.js"
-    }
+    },
+    "./skills/*": "./skills/*"
   },
   "sideEffects": [
     "dist/genui.*.js",
@@ -19,7 +20,8 @@
     "**/components/index.ts"
   ],
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "build": "tsc --noEmit && vite build",
