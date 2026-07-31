@@ -53,7 +53,7 @@ const BUILTIN_DESCRIPTIONS: Record<string, { description: string; properties?: R
   Text: { description: 'Typography text with variant support (h1-h5, caption)', properties: { text: 'Text content', variant: 'Text variant (h1, h2, h3, h4, h5, caption)' } },
   Image: { description: 'Image display', properties: { src: 'Image URL', alt: 'Alt text' } },
   Icon: { description: 'Ant Design icon', properties: { name: 'Icon name' } },
-  Button: { description: 'Clickable button', properties: { text: 'Button text', variant: 'primary, default, dashed, text, link', danger: 'Danger style', disabled: 'Disabled state' } },
+  Button: { description: 'Clickable button', properties: { text: 'Button text', variant: 'primary, default, dashed, text, link', danger: 'Danger style', disabled: 'Disabled state', size: 'small, middle, large', loading: 'Show loading state' } },
   Divider: { description: 'Visual divider line' },
   Web: { description: 'Embedded web content via iframe', properties: { url: 'URL to embed' } },
 
@@ -77,7 +77,7 @@ const BUILTIN_DESCRIPTIONS: Record<string, { description: string; properties?: R
   Table: { description: 'Data table with columns', properties: { columns: 'Column definitions', dataSource: 'Row data array' } },
   RichText: { description: 'Rich text content display', properties: { content: 'Rich text content' } },
   Markdown: { description: 'Markdown content renderer', properties: { content: 'Markdown text content' } },
-  Avatar: { description: 'User avatar image or icon', properties: { src: 'Image URL', size: 'Size in pixels', shape: 'circle or square' } },
+  Avatar: { description: 'User avatar image or icon', properties: { src: 'Image URL', alt: 'Alt text', size: 'Size in pixels', shape: 'circle or square', icon: 'Icon name' } },
   Badge: { description: 'Status badge or dot indicator', properties: { count: 'Badge count number', dot: 'Show as dot', status: 'success, error, warning, processing, default' } },
   Statistic: { description: 'Statistic number display', properties: { title: 'Label', value: 'Numeric value', prefix: 'Prefix text', suffix: 'Suffix text', precision: 'Decimal places' } },
   Timeline: { description: 'Vertical timeline of events', properties: { items: 'Array of {color, children, label}', mode: 'left, right, alternate' } },
@@ -88,7 +88,7 @@ const BUILTIN_DESCRIPTIONS: Record<string, { description: string; properties?: R
   // Feedback
   Alert: { description: 'Alert banner with type and optional close', properties: { message: 'Alert message', type: 'success, info, warning, error', closable: 'Show close button', showIcon: 'Show type icon' } },
   Drawer: { description: 'Slide-in panel overlay', properties: { title: 'Drawer title', open: 'Visibility', placement: 'right, left, top, bottom', width: 'Panel width' } },
-  Progress: { description: 'Progress bar or circle', properties: { percent: 'Progress percentage', type: 'line, circle, dashboard', status: 'success, exception, active' } },
+  Progress: { description: 'Progress bar or circle', properties: { percent: 'Progress percentage', type: 'line, circle, dashboard', status: 'success, exception, normal, active' } },
   Result: { description: 'Status result page', properties: { status: 'success, error, info, warning, 404, 403, 500', title: 'Result title', subTitle: 'Result subtitle' } },
   Skeleton: { description: 'Loading placeholder', properties: { active: 'Animate skeleton', loading: 'Show skeleton', avatar: 'Show avatar placeholder' } },
   Spin: { description: 'Loading spinner', properties: { spinning: 'Show spinner', size: 'small, default, large', tip: 'Loading text' } },
@@ -108,7 +108,7 @@ const BUILTIN_DESCRIPTIONS: Record<string, { description: string; properties?: R
   FloatButton: { description: 'Floating action button', properties: { icon: 'Button icon', tooltip: 'Tooltip text', type: 'default or primary' } },
 
   // Chart
-  Chart: { description: 'Interactive chart (bar, line, area, column, scatter, pie, donut, radar, gauge, rose, funnel, heatmap, treemap, sankey, boxplot, candlestick, sunburst, themeRiver, graph, parallel, pictorialBar, effectScatter)', properties: { chartType: 'Chart type string', data: 'Chart data array', config: 'Chart config: field mappings (xField, yField, angleField, colorField) + display overrides. Display: colors (palette string[]), grid ({left,right,top,bottom}), legendPosition (top|bottom|{top,left}), tooltip ({trigger:axis|item, template, formatter}), axisLabel ({rotate, unit}), visualMap ({min,max,colors} for heatmap), indicatorMax (number[] for radar). combo adds: series (ComboSeriesSpec[]), yAxes (ComboYAxisSpec[]). tooltip.formatter references a name registered via registerFormatter (built-in: percent, thousands; business presets like "万元" registered by host).' } },
+  Chart: { description: 'Interactive chart (bar, line, area, column, pie, donut, rose, scatter, radar, heatmap, funnel, gauge, treemap, sunburst, sankey, graph, boxplot, candlestick, wordCloud, parallel, pictorialBar, effectScatter, themeRiver, bar_grouped, combo)', properties: { chartType: 'Chart type string', data: 'Chart data array', config: 'Chart config: field mappings (xField, yField, angleField, colorField) + display overrides. Display: colors (palette string[]), grid ({left,right,top,bottom}), legendPosition (top|bottom|{top,left}), tooltip ({trigger:axis|item, template, formatter}), axisLabel ({rotate, unit}), visualMap ({min,max,colors} for heatmap), indicatorMax (number[] for radar). combo adds: series (ComboSeriesSpec[]), yAxes (ComboYAxisSpec[]). tooltip.formatter references a name registered via registerFormatter (built-in: percent, thousands; business presets like "万元" registered by host).' } },
 
   // Media
   Video: { description: 'Video player', properties: { url: 'Video URL', controls: 'Show controls' } },

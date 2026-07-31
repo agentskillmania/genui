@@ -130,7 +130,7 @@ When data can be represented by multiple component types, prefer the one with hi
 |---|---|---|
 | Tier 1 — Visual | `Chart`, `Image`, `Carousel`, `Video`, `Lottie` | Numerical comparison → Chart; visual content → Image/Carousel; animation → Lottie |
 | Tier 2 — Structured | `Card`, `RichText`, `Table`, `Markdown`, `Descriptions`, `Timeline` | Formatted emphasis → RichText; tabular data → Table; rich text blocks → Markdown |
-| Tier 3 — Basic | `Text`, `Icon`, `Image`, `Divider`, `Button`, `Tag`, `Badge`, `Statistic` | Single labels, icons, separators, metrics, tags |
+| Tier 3 — Basic | `Text`, `Icon`, `Divider`, `Button`, `Tag`, `Badge`, `Statistic` | Single labels, icons, separators, metrics, tags |
 
 Rules:
 

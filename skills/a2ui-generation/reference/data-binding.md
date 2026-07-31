@@ -26,7 +26,7 @@ Rules:
 
 ## Dynamic Template Binding
 
-Both `List` and `Column` can drive child components from data. Template components use relative paths internally.
+Both `List` and `Column` can drive child components from data. The engine expands the template for each data item — components themselves do not need to handle the expansion. Template components use relative paths internally.
 
 ```json
 {"id": "list1", "component": "List", "children": {"path": "/data/items", "componentId": "item_tpl"}}
