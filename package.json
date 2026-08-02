@@ -12,6 +12,7 @@
       "import": "./dist/genui.es.js",
       "require": "./dist/genui.cjs.js"
     },
+    "./package.json": "./package.json",
     "./skills/*": "./skills/*"
   },
   "sideEffects": [
