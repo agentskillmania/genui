@@ -3,21 +3,20 @@
   "version": "0.1.1",
   "description": "A2UI v0.9 compatible generative UI engine — renders streaming A2UI protocol as React components via Ant Design 6 + ECharts",
   "type": "module",
-  "main": "./dist/genui.cjs.js",
-  "module": "./dist/genui.es.js",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/genui.es.js",
-      "require": "./dist/genui.cjs.js"
+      "import": "./dist/index.js",
+      "require": "./dist/cjs/index.js"
     },
     "./package.json": "./package.json",
     "./skills/*": "./skills/*"
   },
   "sideEffects": [
-    "dist/genui.*.js",
-    "src/components/index.ts",
+    "**/components/index.js",
     "**/components/index.ts"
   ],
   "files": [
@@ -25,7 +24,7 @@
     "skills"
   ],
   "scripts": {
-    "build": "tsc --noEmit && vite build",
+    "build": "node scripts/build.mjs",
     "dev": "vite",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -71,7 +70,6 @@
     "storybook": "^8.6.0",
     "typescript": "^5.3.0",
     "vite": "^5.1.0",
-    "vite-plugin-dts": "^3.7.0",
     "vitest": "^1.2.0"
   },
   "keywords": [
