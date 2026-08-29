@@ -111,30 +111,28 @@ Do not read all sub-documents by default. Load only what the current task requir
 
 ## Output Persistence
 
-Final artifacts should be written to files by default, and the user should be told the paths explicitly.
+The A2UI payload itself is the deliverable. **Do not write to disk by default** — deliver `updateComponents` / `updateDataModel` inline in the response, since most hosts consume the payload from the conversation, not from files.
 
-Priority order:
+Write artifacts to files only when one of these holds:
 
-1. If the user specifies a directory or filename, save according to that
-2. If the user provides an existing artifact directory, prefer saving near that context
-3. Otherwise choose a clear, sensible, easy-to-find location
+1. The user explicitly asks for files, or specifies a directory / filename
+2. The user provides an existing artifact directory or existing output files to iterate on
+3. The session runs in a coding-agent environment with filesystem access (Claude Code, ZCode, Cursor, …) where on-disk artifacts enable preview tooling and diff-based iteration — in that environment, saving is the default
 
-Default file naming:
+When writing to disk:
 
-- `*_components.json`
-- `*_datamodel.json`
-- `*_transformer.py` or `*_vo.py`
+- Tell the user the paths explicitly
+- Priority: user-specified path > user-provided artifact directory > a clear, sensible, easy-to-find location
+- Default file naming: `*_components.json`, `*_datamodel.json`, `*_transformer.py` or `*_vo.py`
+- Non-DTO mode write order (mandatory): `*_components.json` first, `*_datamodel.json` second
 
-Non-DTO mode write order (mandatory):
-
-1. Generate and save `*_components.json` first
-2. Generate and save `*_datamodel.json` second
-
-To save tokens:
+To save tokens in file mode:
 
 - Write the first draft to disk immediately after generation
 - If the user continues modifying, iterate on the existing file by default
 - Each round of changes should edit the file and work from a diff — do not repaste the entire JSON in the conversation
+
+In inline mode, re-emit the complete payload after each change round (hosts parse complete JSON messages — never emit fragments), but do not repeat unchanged prose such as the layout rationale.
 
 ## Workflow
 
@@ -142,13 +140,23 @@ To save tokens:
 2. Load only the sub-documents the current task truly needs
 3. Before formal output, explicitly list the layout rationale: at minimum describe the main sections, visual focal point, information rhythm, key horizontal relationships, and the role of images
 4. Based on that layout rationale, draft an internal first version, then perform at least `1` explicit design improvement before proceeding to formal output
-5. Output the first draft formally and write it to disk immediately (non-DTO mode: components before datamodel, mandatory)
-6. Perform design quality review following [`reference/design-review.md`](reference/design-review.md); apply improvements directly to the on-disk file
+5. Output the first draft formally — inline by default; write to disk only when the Output Persistence conditions apply (non-DTO mode: components before datamodel, mandatory)
+6. Perform design quality review following [`reference/design-review.md`](reference/design-review.md); apply improvements directly to the delivered artifact (the on-disk file in file mode, otherwise the re-emitted payload)
 7. After design review improvements, perform a dedicated "protected content abnormal wrapping" check on all horizontal layouts
-8. At delivery, clearly state the output file paths; if placeholder links were used, explicitly remind the user to replace them
+8. At delivery in file mode, clearly state the output file paths; if placeholder links were used, explicitly remind the user to replace them
+
+## Engine Contract (GenUI renderer)
+
+The payload you generate is consumed by the GenUI engine (`@agentskillmania/genui`). The engine never fails silently — anything unrenderable surfaces as a visible error card — but you must honor these invariants for real content to appear:
+
+1. **`createSurface` comes first.** The host creates the surface (`{ "createSurface": { "surfaceId": ... } }`) before any `updateComponents` / `updateDataModel`; updates targeting an unknown `surfaceId` are dropped with a console error. Keep `surfaceId` identical across all messages.
+2. **The render entry is the literal `"root"`.** Each surface needs exactly one component whose `id` is `"root"`; the engine renders the tree from it. An entry id like `"card1"` renders a "No root component found" error card.
+3. **Component names must be registered** in [`reference/component-catalog.md`](reference/component-catalog.md). Unknown types render a visible "Unknown component type" error card.
+4. **Template bindings are expanded by the engine.** `{"children": {"path": "/data/items", "componentId": "item_tpl"}}` produces one instance per array item; relative `{"path": "field"}` bindings inside the template are resolved against each item. A missing/non-array path or unknown `componentId` renders an error card; an empty array renders an empty list.
 
 ## Non-Negotiables
 
+- **Always deliver A2UI output.** Once this skill is triggered, the task must end with a renderable payload — `updateComponents` + `updateDataModel` (plus the Python transformer in DTO mode), delivered inline by default, or written to disk when the Output Persistence conditions apply. A long explanation without A2UI artifacts is a failed invocation. If generation is genuinely not applicable, state that explicitly with the reason before doing anything else.
 - Non-DTO mode must produce UI layout (`updateComponents`) before data (`updateDataModel`)
 - Do not output fake buttons; clickable elements must use a real `Button + action`
 - Real buttons must have visible label text via the `text` property
@@ -156,7 +164,7 @@ To save tokens:
 - `Component/card` mode must not silently become page-like; do not deliver a near-full-screen large card
 - Component mode content should converge first; escalate to page only when convergence fails, and do so explicitly
 - When design requires images, do not fabricate non-existent image URLs
-- After the first draft, always iterate on the on-disk file; do not regenerate the entire artifact each round
+- In file mode, always iterate on the on-disk file after the first draft; do not regenerate the entire artifact each round
 - Before formal output, the layout rationale must be explicitly listed; skipping layout planning and jumping straight to JSON is not allowed
 - Before formal output, at least `1` explicit improvement round is required
 - **Component allowlist**: Only use component names defined in [`reference/component-catalog.md`](reference/component-catalog.md).

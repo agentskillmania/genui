@@ -20,7 +20,7 @@ Default deliverables are three items:
 Important notes:
 
 - In this mode, Python is the single source of truth
-- Both JSON files must be produced by running the Python code
+- Both JSON payloads must be produced by running the Python code
 - Do not deliver Python on one side and hand-write a separate independent JSON on the other
 
 ## Unified Python Entry
@@ -57,7 +57,7 @@ Mandatory requirements:
 
 - Write the Python transformation logic first
 - Run Python to produce the two JSONs
-- The final on-disk `*_components.json` and `*_datamodel.json` must come from Python's output
+- The final delivered `updateComponents` / `updateDataModel` payloads must come from Python's output (written to `*_components.json` / `*_datamodel.json` in file mode, emitted inline otherwise)
 - If Python is modified, re-run it to refresh both JSONs
 - Do not manually maintain a final JSON that drifts from Python
 
@@ -172,6 +172,6 @@ Default handling direction:
 4. Design the component structure, reserving fallback space for missing fields
 5. Write the Python mapping to convert the DTO to final payload; omit at component level or section level when fields are missing
 6. Run Python to directly produce `updateComponents` and `updateDataModel`
-7. Write the Python output to two JSON files on disk
+7. In file mode, write the Python output to two JSON files; otherwise emit the payloads inline
 8. Perform design review and optimization
-9. Deliver with file paths clearly stated
+9. Deliver — in file mode state the file paths clearly, otherwise the complete payload in the response

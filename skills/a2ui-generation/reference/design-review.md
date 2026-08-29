@@ -2,17 +2,17 @@
 
 ## Purpose
 
-After the first draft is written, perform this structured design review on the on-disk output. The goal is to elevate the UI from "correct but bland" to "polished and visually compelling" by auditing four dimensions: color palette, layout structure, decorative detail, and theme appropriateness.
+After the first draft is delivered, perform this structured design review on the components payload (the on-disk `*_components.json` in file mode, otherwise the emitted payload). The goal is to elevate the UI from "correct but bland" to "polished and visually compelling" by auditing four dimensions: color palette, layout structure, decorative detail, and theme appropriateness.
 
 ## How to Use
 
-1. Read the generated `*_components.json` file
+1. Read the generated `updateComponents` payload (the on-disk `*_components.json` file in file mode)
 2. Walk through each audit dimension below
 3. For every issue found, record:
    - **Component**: which component id is affected
    - **Problem**: what specifically is wrong
    - **Fix**: the concrete style change to apply
-4. Apply all fixes to the on-disk file via diff edits
+4. Apply all fixes to the delivered artifact — via diff edits to the on-disk file in file mode, otherwise by re-emitting the corrected payload
 
 ## Dimension 1: Color Palette Audit
 

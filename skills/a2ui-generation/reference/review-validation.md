@@ -10,11 +10,11 @@ This document unifies the review and validation process after a first draft, wit
 
 ## End-to-End Flow
 
-After the first draft is written to disk, execute the following flow by default:
+After the first draft is delivered, execute the following flow by default:
 
-1. Read the on-disk file (review based on file, do not start a new draft)
+1. Review the delivered artifact (the on-disk file in file mode; otherwise the emitted payload — do not start a new draft)
 2. Perform design quality review following [`reference/design-review.md`](reference/design-review.md)
-3. Apply improvements directly to the on-disk file
+3. Apply improvements directly to that artifact (diff edits on the file in file mode; otherwise re-emit the corrected payload)
 4. After improvements, re-verify the output
 
 ## Round Checklist (Every Round)

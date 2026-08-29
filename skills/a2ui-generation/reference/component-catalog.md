@@ -89,6 +89,13 @@ Template binding:
 {"id": "list1", "component": "List", "children": {"path": "/data/items", "componentId": "item_template"}}
 ```
 
+Engine behavior for template bindings (`{"path", "componentId"}` as `children`):
+
+- The engine expands the template once per array item at `path`; relative `{"path": "field"}` bindings inside the template resolve against that item
+- Empty array → empty list (no error); path missing from the dataModel or value not an array → visible error card naming the bad path; unknown `componentId` → visible error card
+- `componentId` must reference a component sent in the same `updateComponents` payload
+- Avoid controlled inputs (TextField/Switch/…) inside templates: their change is reported via `syncUIToData` with the per-instance component id, but automatic write-back to the originating array item is not supported
+
 Properties: `header`, `footer`, `bordered`, `split`, `size` (`small|default|large`), `style`
 
 ### `Card`

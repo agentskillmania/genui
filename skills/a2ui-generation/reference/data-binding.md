@@ -43,6 +43,14 @@ Relative path rules:
 - Nested field: `labels/availableLiters`
 - Do not write `labels.availableLiters`
 
+Engine behavior:
+
+- The surface re-expands templates on every render, so a later `updateDataModel` on the bound path updates the instances automatically — no `updateComponents` resend needed
+- Absolute pointers inside a template (e.g. `/page/title`) resolve against the surface dataModel, but the skill convention forbids them inside templates — keep template bindings relative to the item
+- `item_tpl` must exist as a component id in the same `updateComponents` payload; it may itself have `children` (the whole subtree is cloned per item with per-instance ids)
+- Broken bindings never render as blank space: path missing from the dataModel or not an array, or an unknown `componentId`, produce a visible error card; an empty array produces an empty list
+- Controlled inputs inside templates report changes via `syncUIToData` with the per-instance component id; automatic write-back to the originating array item is not supported — prefer read-only components inside templates
+
 ## Structured Array Property Binding
 
 Path binding is recursive: arrays are traversed, `{"path": ...}` is resolved, and plain objects walk each field. So **any structured array property** — not just `value`/`text` — can take a binding path. This is how dynamic candidate lists (options / treeData / items) stay data-driven instead of being hard-coded into the component tree.
