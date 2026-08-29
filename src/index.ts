@@ -38,6 +38,14 @@ export type { EChartsFormatter } from './components/chart/formatterRegistry';
 export { validateA2UIMessage, classifyA2UIEvent, componentSchema, A2UI_VERSION } from './tools/schemaValidator';
 export { exportCatalog } from './tools/catalogExport';
 
+// ===== Built-in error diagnostics =====
+export {
+  GENUI_ERROR_COMPONENT,
+  ERROR_ID_PREFIX,
+  createErrorComponent,
+} from './engine/surfaceError';
+export type { GenuiErrorSeverity } from './engine/surfaceError';
+
 // ===== Types =====
 export type {
   GenuiConfig,

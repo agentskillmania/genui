@@ -9,6 +9,8 @@ import type { SurfaceManager } from "../SurfaceManager";
 import type { SurfaceEvent } from "../engine/types";
 import type { AGenUIComponent, ActionEvent } from "../types/sdk";
 import { getComponentRenderer } from "./registry";
+import { GenuiError } from "./GenuiError";
+import { createErrorComponent } from "../engine/surfaceError";
 
 export interface GenUISurfaceProps {
   surfaceManager: SurfaceManager;
@@ -87,7 +89,19 @@ const SurfaceComponentNode = memo<SurfaceComponentNodeProps>(
     const renderer = getComponentRenderer(comp.component);
     if (!renderer) {
       console.warn(`[GenUI] Unknown component type: ${comp.component}`);
-      return null;
+      // Never collapse to an empty subtree — render a visible error card
+      return (
+        <React.Fragment key={comp.id}>
+          <GenuiError
+            id={`__genui_error__${comp.id}`}
+            component="GenuiError"
+            properties={{
+              message: `Unknown component type: "${comp.component}"`,
+              description: `Component "${comp.id}" uses type "${comp.component}", which is not registered in this GenUI build. Check the component catalog allowlist.`,
+            }}
+          />
+        </React.Fragment>
+      );
     }
 
     return (
@@ -333,6 +347,61 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
     [surfaceManager, getActionCallback, getSyncCallback],
   );
 
+  /**
+   * A surface exists but `getRootComponents()` is empty. Distinguish
+   * "stream has not delivered any components yet" (waiting placeholder)
+   * from "components arrived but none has id 'root'" (hard error card).
+   */
+  const renderSurfaceBody = useCallback(
+    (surfaceId: string, components: AGenUIComponent[]): React.ReactNode => {
+      if (components.length > 0) {
+        return components.map((component) => renderComponent(surfaceId, component));
+      }
+
+      const surfaceState = surfaceManager.getEngine().getSurface(surfaceId);
+      if (surfaceState?.hasReceivedComponents()) {
+        const ids = surfaceState.getComponentIds();
+        const errorComp = createErrorComponent(
+          `__genui_error__root_${surfaceId}`,
+          'No root component found on this surface',
+          `A2UI requires exactly one component with id "root" per surface. Received ${ids.length} component(s) [${ids
+            .slice(0, 8)
+            .map((id) => `"${id}"`)
+            .join(', ')}${ids.length > 8 ? ', …' : ''}] but none has id "root". Rename the tree entry component id to "root".`,
+        );
+        return (
+          <GenuiError
+            id={errorComp.id}
+            component={errorComp.component}
+            properties={{
+              message: errorComp.message,
+              description: errorComp.description,
+              severity: errorComp.severity,
+            }}
+          />
+        );
+      }
+
+      return (
+        <div
+          style={{
+            border: '1px dashed #d9d9d9',
+            borderRadius: 8,
+            padding: '16px 24px',
+            color: '#999',
+            fontSize: 13,
+          }}
+        >
+          Waiting for A2UI data… If you expected content here, make sure a
+          createSurface message is sent for surface &quot;{surfaceId}&quot;
+          before updateComponents/updateDataModel — updates for unknown
+          surfaces are dropped.
+        </div>
+      );
+    },
+    [renderComponent, surfaceManager],
+  );
+
   const containerStyle: React.CSSProperties = {
     width,
     height,
@@ -342,25 +411,39 @@ export const GenUISurface: React.FC<GenUISurfaceProps> = ({
 
   return (
     <div className={`genui-surface ${className || ""}`} style={containerStyle}>
-      {Array.from(surfaces.values()).map((surface) => {
-        const mode = getThemeMode(surface.surfaceId);
-        const antdThemeConfig = {
-          algorithm: [
-            antdTheme.compactAlgorithm,
-            ...(mode === "dark" ? [antdTheme.darkAlgorithm] : []),
-          ],
-        };
+      {surfaces.size === 0 ? (
+        <div
+          style={{
+            border: '1px dashed #d9d9d9',
+            borderRadius: 8,
+            padding: '16px 24px',
+            color: '#999',
+            fontSize: 13,
+          }}
+        >
+          No A2UI surface yet. Send a createSurface message, then
+          updateComponents / updateDataModel — updates targeting a surface that
+          was never created are dropped by the engine.
+        </div>
+      ) : (
+        Array.from(surfaces.values()).map((surface) => {
+          const mode = getThemeMode(surface.surfaceId);
+          const antdThemeConfig = {
+            algorithm: [
+              antdTheme.compactAlgorithm,
+              ...(mode === "dark" ? [antdTheme.darkAlgorithm] : []),
+            ],
+          };
 
-        return (
-          <ConfigProvider key={surface.surfaceId} theme={antdThemeConfig}>
-            <div className="genui-surface-instance">
-              {surface.components.map((component) =>
-                renderComponent(surface.surfaceId, component),
-              )}
-            </div>
-          </ConfigProvider>
-        );
-      })}
+          return (
+            <ConfigProvider key={surface.surfaceId} theme={antdThemeConfig}>
+              <div className="genui-surface-instance">
+                {renderSurfaceBody(surface.surfaceId, surface.components)}
+              </div>
+            </ConfigProvider>
+          );
+        })
+      )}
     </div>
   );
 };

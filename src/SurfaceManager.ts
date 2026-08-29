@@ -300,7 +300,10 @@ export class SurfaceManager {
       theme = inner.theme as Record<string, string> | undefined;
     }
 
-    if (!surfaceId) return;
+    if (!surfaceId) {
+      console.error('[GenUI] createSurface dropped: missing surfaceId in payload.', data);
+      return;
+    }
     this.engine.createSurface(surfaceId, catalogId ?? '', theme ?? {});
   }
 
@@ -368,7 +371,13 @@ export class SurfaceManager {
     }
 
     surfaceId = surfaceId ?? result.surfaceId ?? '';
-    if (!surfaceId || !components) return;
+    if (!surfaceId || !components) {
+      console.error(
+        '[GenUI] updateComponents dropped: payload must contain surfaceId and a non-empty components array.',
+        { surfaceId, hasComponents: Array.isArray(components) },
+      );
+      return;
+    }
 
     // Engine expects string[] for updateComponents
     const componentsJson = components.map((c) => JSON.stringify(c));

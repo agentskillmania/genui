@@ -19,6 +19,22 @@ import type {
   FunctionHandler,
 } from '../types/sdk';
 import type { SurfaceEvent, SurfaceEventListener } from './types';
+import { createErrorComponent, ERROR_ID_PREFIX } from './surfaceError';
+
+/** A2UI v0.9 ChildList template binding: drive children from a data array. */
+interface TemplateBinding {
+  path: string;
+  componentId: string;
+}
+
+function isTemplateBinding(value: unknown): value is TemplateBinding {
+  return (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as Record<string, unknown>).path === 'string' &&
+    typeof (value as Record<string, unknown>).componentId === 'string'
+  );
+}
 
 /**
  * Resolver that looks up a registered function handler by name.
@@ -83,6 +99,38 @@ function setByPath(obj: Record<string, unknown>, segments: string[], value: unkn
   current[segments[segments.length - 1]] = value;
 }
 
+/**
+ * Recursively inline a template component's RELATIVE `{ path: "field" }`
+ * bindings against one data item. Absolute pointers and `{ call, args }`
+ * bindings are left untouched — the renderer resolves them at render time.
+ * Relative paths use `/`-separated segments per the A2UI skill contract
+ * (e.g. `name`, `labels/availableLiters`).
+ */
+function resolveItemBindings(value: unknown, item: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((entry) => resolveItemBindings(entry, item));
+  }
+  if (value !== null && typeof value === 'object') {
+    const obj = value as Record<string, unknown>;
+    if ('path' in obj && typeof obj.path === 'string') {
+      const path = obj.path as string;
+      if (!path.startsWith('/')) {
+        return getByPath(item, path.split('/'));
+      }
+      return value;
+    }
+    if ('call' in obj) {
+      return value;
+    }
+    const resolved: Record<string, unknown> = {};
+    for (const [key, val] of Object.entries(obj)) {
+      resolved[key] = resolveItemBindings(val, item);
+    }
+    return resolved;
+  }
+  return value;
+}
+
 // ---------------------------------------------------------------------------
 // SurfaceState — internal state container for a single surface
 // ---------------------------------------------------------------------------
@@ -97,6 +145,10 @@ export class SurfaceState {
   private readonly themeConfig: Record<string, string>;
   /** Optional function resolver for `{ call, args }` data bindings */
   private readonly functionResolver?: FunctionResolver;
+  /** Whether any updateComponents/updateComponent payload has been received.
+   *  Lets the renderer distinguish "waiting for the stream" from
+   *  "components arrived but no id==='root' entry" (a hard error). */
+  private receivedComponents = false;
 
   /**
    * @param surfaceId   - Unique surface identifier
@@ -132,6 +184,7 @@ export class SurfaceState {
         ) {
           const comp = parsed as AGenUIComponent;
           this.components.set(comp.id, comp);
+          this.receivedComponents = true;
         }
       } catch {
         // Ignore malformed JSON — the caller may be streaming partial data
@@ -152,6 +205,7 @@ export class SurfaceState {
       ) {
         const comp = parsed as AGenUIComponent;
         this.components.set(comp.id, comp);
+        this.receivedComponents = true;
       }
     } catch {
       // Ignore malformed JSON
@@ -167,9 +221,24 @@ export class SurfaceState {
     return root ? [root] : [];
   }
 
+  /** Whether any component payload has reached this surface. */
+  hasReceivedComponents(): boolean {
+    return this.receivedComponents;
+  }
+
+  /** All component ids currently registered on this surface (insertion order). */
+  getComponentIds(): string[] {
+    return Array.from(this.components.keys());
+  }
+
   /**
    * Resolve the children of a parent component using its `child` or `children` field.
    * A2UI v0.9 uses an adjacency-list model where parents reference children by ID.
+   *
+   * A non-array `children` object (`{ path, componentId }`) is a template
+   * binding: the engine expands the referenced template component once per
+   * item of the data array, resolving the template's relative path bindings
+   * against each item.
    */
   getChildren(parentId: string): AGenUIComponent[] {
     const parent = this.components.get(parentId);
@@ -181,7 +250,7 @@ export class SurfaceState {
       return childComp ? [childComp] : [];
     }
 
-    // Multiple children references
+    // Multiple children references / template binding
     if (parent.children) {
       if (Array.isArray(parent.children)) {
         const resolved: AGenUIComponent[] = [];
@@ -191,11 +260,140 @@ export class SurfaceState {
         }
         return resolved;
       }
-      // Template binding — not yet supported for rendering
+      if (isTemplateBinding(parent.children)) {
+        return this.expandTemplate(parentId, parent.children);
+      }
       return [];
     }
 
     return [];
+  }
+
+  // ---- Template binding expansion ----
+
+  /**
+   * Expand a `{ path, componentId }` template binding into concrete children.
+   *
+   * For each item of the array at `path`, the template component subtree is
+   * deep-cloned with per-instance ids (`<parentId>:<index>:<origId>`) and the
+   * template's relative `{ path: "field" }` bindings are resolved against the
+   * item and inlined as literal values. Re-expansion happens on every render,
+   * so later `updateDataModel` calls are picked up automatically.
+   *
+   * Broken bindings never collapse to an empty subtree: a visible error
+   * component is returned instead.
+   */
+  private expandTemplate(parentId: string, binding: TemplateBinding): AGenUIComponent[] {
+    const errorId = `${ERROR_ID_PREFIX}${parentId}`;
+
+    let data: unknown;
+    try {
+      data = getByPath(this.dataModel, splitPointer(binding.path, true));
+    } catch {
+      data = undefined;
+    }
+
+    if (data === undefined || data === null) {
+      return [
+        createErrorComponent(
+          errorId,
+          `Template binding path "${binding.path}" not found in dataModel`,
+          `Component "${parentId}" binds children to "${binding.path}", but the dataModel has no value there. Send it via updateDataModel, or fix the binding path.`,
+        ),
+      ];
+    }
+    if (!Array.isArray(data)) {
+      return [
+        createErrorComponent(
+          errorId,
+          `Template binding path "${binding.path}" is not an array`,
+          `Component "${parentId}" expects an array at "${binding.path}" to expand the template "${binding.componentId}", got ${typeof data}.`,
+        ),
+      ];
+    }
+    if (data.length === 0) {
+      return [];
+    }
+
+    const template = this.components.get(binding.componentId);
+    if (!template) {
+      return [
+        createErrorComponent(
+          errorId,
+          `Template component "${binding.componentId}" not found`,
+          `Component "${parentId}" references template "${binding.componentId}", but no component with that id was sent via updateComponents.`,
+        ),
+      ];
+    }
+
+    return data.map((item, index) => {
+      const clone = this.instantiateTemplate(template, item, `${parentId}:${index}`);
+      this.registerTemplateClone(clone);
+      return clone;
+    });
+  }
+
+  /**
+   * Deep-clone a template component subtree for one data item.
+   * Every cloned node gets instance id `<instancePrefix>:<origId>` and its
+   * relative `{ path: "field" }` property bindings are resolved against
+   * `item` and inlined as literal values. `action` definitions are copied
+   * verbatim (they are resolved by the host, not per-item).
+   */
+  private instantiateTemplate(
+    template: AGenUIComponent,
+    item: unknown,
+    instancePrefix: string,
+  ): AGenUIComponent {
+    const cloned: AGenUIComponent = {
+      ...template,
+      id: `${instancePrefix}:${template.id}`,
+    };
+
+    // Inline relative path bindings in component-specific properties
+    for (const [key, value] of Object.entries(cloned)) {
+      if (key === 'id' || key === 'component' || key === 'child' || key === 'children' || key === 'action' || key === 'checks') {
+        continue;
+      }
+      (cloned as Record<string, unknown>)[key] = resolveItemBindings(value, item);
+    }
+
+    // Remap child references to per-instance clones
+    if (typeof cloned.child === 'string') {
+      const childTemplate = this.components.get(cloned.child);
+      if (childTemplate) {
+        const childClone = this.instantiateTemplate(childTemplate, item, instancePrefix);
+        this.registerTemplateClone(childClone);
+        cloned.child = childClone.id;
+      } else {
+        delete cloned.child;
+      }
+    }
+
+    if (Array.isArray(cloned.children)) {
+      const resolvedChildren: string[] = [];
+      for (const childId of cloned.children) {
+        if (typeof childId !== 'string') continue;
+        const childTemplate = this.components.get(childId);
+        if (childTemplate) {
+          const childClone = this.instantiateTemplate(childTemplate, item, instancePrefix);
+          this.registerTemplateClone(childClone);
+          resolvedChildren.push(childClone.id);
+        }
+      }
+      cloned.children = resolvedChildren;
+    }
+
+    return cloned;
+  }
+
+  /**
+   * Register a cloned template node so `getChildren` / `applySyncChange` can
+   * look it up. Clones live in the same flat map as regular components, keyed
+   * by their per-instance ids.
+   */
+  private registerTemplateClone(clone: AGenUIComponent): void {
+    this.components.set(clone.id, clone);
   }
 
   // ---- Data model ----
@@ -362,6 +560,20 @@ export class SurfaceEngine {
   private cachedSizes = new Map<string, SurfaceSize>();
   private sizeProvider: SurfaceSizeProvider | null = null;
   private functionResolver: FunctionResolver | null = null;
+  /** Reports already emitted, keyed by `surfaceId:operation`, so streaming
+   *  payloads targeting a non-existent surface log once per operation. */
+  private missingSurfaceReported = new Set<string>();
+
+  /** Report an update targeting a surface that was never created. */
+  private reportMissingSurface(surfaceId: string, operation: string): void {
+    const key = `${surfaceId}:${operation}`;
+    if (this.missingSurfaceReported.has(key)) return;
+    this.missingSurfaceReported.add(key);
+    console.error(
+      `[GenUI] ${operation} dropped: surface "${surfaceId}" does not exist. ` +
+        `Send a createSurface message for this surfaceId before updateComponents/updateDataModel.`,
+    );
+  }
 
   /**
    * Set the function resolver used to evaluate `{ call, args }` bindings.
@@ -418,7 +630,10 @@ export class SurfaceEngine {
    */
   updateComponents(surfaceId: string, componentsJson: string[]): void {
     const surface = this.surfaces.get(surfaceId);
-    if (!surface) return;
+    if (!surface) {
+      this.reportMissingSurface(surfaceId, 'updateComponents');
+      return;
+    }
     surface.updateComponents(componentsJson);
     this.emit({ type: 'updateComponents', surfaceId, payload: componentsJson });
   }
@@ -429,7 +644,10 @@ export class SurfaceEngine {
    */
   updateComponent(surfaceId: string, componentJson: string): void {
     const surface = this.surfaces.get(surfaceId);
-    if (!surface) return;
+    if (!surface) {
+      this.reportMissingSurface(surfaceId, 'updateComponent');
+      return;
+    }
     surface.updateComponent(componentJson);
     this.emit({ type: 'updateComponents', surfaceId });
   }
@@ -455,7 +673,10 @@ export class SurfaceEngine {
    */
   updateDataModel(surfaceId: string, path: string, value: unknown): void {
     const surface = this.surfaces.get(surfaceId);
-    if (!surface) return;
+    if (!surface) {
+      this.reportMissingSurface(surfaceId, 'updateDataModel');
+      return;
+    }
     surface.updateDataModel(path, value);
     // emit 事件，让 GenUISurface 触发重渲染，绑定 path 的组件才会取到新值
     this.emit({ type: 'updateDataModel', surfaceId, payload: { path, value } });
@@ -467,7 +688,10 @@ export class SurfaceEngine {
    */
   appendDataModel(surfaceId: string, path: string, value: string): void {
     const surface = this.surfaces.get(surfaceId);
-    if (!surface) return;
+    if (!surface) {
+      this.reportMissingSurface(surfaceId, 'appendDataModel');
+      return;
+    }
     surface.appendDataModel(path, value);
   }
 

@@ -86,6 +86,9 @@ import { FloatButton } from './utility/FloatButton';
 // ===== Chart component =====
 import { Chart } from './chart/Chart';
 
+// ===== Built-in diagnostics component =====
+import { GenuiError } from './GenuiError';
+
 // ===== Register all components (side-effect on module load) =====
 // Layout
 registerComponent('Row', Row);
@@ -166,6 +169,9 @@ registerComponent('FloatButton', FloatButton);
 
 // Chart
 registerComponent('Chart', Chart);
+
+// Built-in diagnostics (synthesized by the render pipeline, not by agents)
+registerComponent('GenuiError', GenuiError);
 
 // Side-effect marker to prevent tree-shaking
 if (typeof window !== 'undefined') {

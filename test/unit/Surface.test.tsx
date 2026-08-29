@@ -24,6 +24,8 @@ const mockSurfaceState = {
   getRootComponents: vi.fn<() => AGenUIComponent[]>(() => []),
   getChildren: vi.fn<(id: string) => AGenUIComponent[]>(() => []),
   getTheme: vi.fn<() => Record<string, string>>(() => ({})),
+  hasReceivedComponents: vi.fn<() => boolean>(() => false),
+  getComponentIds: vi.fn<() => string[]>(() => []),
 };
 
 const mockEngine = {
@@ -104,6 +106,8 @@ describe("GenUISurface", () => {
     mockSurfaceState.getRootComponents.mockReturnValue([]);
     mockSurfaceState.getChildren.mockReturnValue([]);
     mockSurfaceState.getTheme.mockReturnValue({});
+    mockSurfaceState.hasReceivedComponents.mockReturnValue(false);
+    mockSurfaceState.getComponentIds.mockReturnValue([]);
     mockEngine.getSurfaceIds.mockReturnValue([]);
     mockEngine.getSurface.mockReturnValue(mockSurfaceState);
   });
@@ -279,7 +283,7 @@ describe("GenUISurface", () => {
     warnSpy.mockRestore();
   });
 
-  it("returns null for components with no registered renderer", () => {
+  it("renders a visible error card for components with no registered renderer", () => {
     mockGetRenderer.mockReturnValue(undefined);
 
     mockEngine.getSurfaceIds.mockReturnValue(["s1"]);
@@ -291,10 +295,56 @@ describe("GenUISurface", () => {
       <GenUISurface surfaceManager={mockSurfaceManager} />,
     );
 
-    // No component div rendered, only the surface wrapper
+    // The unknown component must surface as a visible GenuiError card,
+    // never as an empty subtree
     const surfaceInstance = container.querySelector(".genui-surface-instance");
     expect(surfaceInstance).toBeTruthy();
-    expect(surfaceInstance?.children.length).toBe(0);
+    expect(surfaceInstance?.children.length).toBeGreaterThan(0);
+    expect(container.querySelector(".ant-alert-error")).toBeTruthy();
+    expect(container.textContent).toContain('Unknown component type: "Unknown"');
+  });
+
+  it("renders a no-root error card when components arrived without id 'root'", () => {
+    mockGetRenderer.mockReturnValue(
+      SimpleRenderer as unknown as ReturnType<typeof getComponentRenderer>,
+    );
+
+    mockEngine.getSurfaceIds.mockReturnValue(["s1"]);
+    mockSurfaceState.getRootComponents.mockReturnValue([]);
+    mockSurfaceState.hasReceivedComponents.mockReturnValue(true);
+    mockSurfaceState.getComponentIds.mockReturnValue(["card1", "title"]);
+
+    const { container } = render(
+      <GenUISurface surfaceManager={mockSurfaceManager} />,
+    );
+
+    expect(container.querySelector(".ant-alert-error")).toBeTruthy();
+    expect(container.textContent).toContain("No root component found");
+    expect(container.textContent).toContain('"card1"');
+  });
+
+  it("renders a waiting placeholder when the stream has not delivered components yet", () => {
+    mockEngine.getSurfaceIds.mockReturnValue(["s1"]);
+    mockSurfaceState.getRootComponents.mockReturnValue([]);
+    mockSurfaceState.hasReceivedComponents.mockReturnValue(false);
+
+    const { container } = render(
+      <GenUISurface surfaceManager={mockSurfaceManager} />,
+    );
+
+    expect(container.querySelector(".ant-alert-error")).toBeNull();
+    expect(container.textContent).toContain("Waiting for A2UI data");
+  });
+
+  it("renders a hint when no surface exists at all", () => {
+    mockEngine.getSurfaceIds.mockReturnValue([]);
+
+    const { container } = render(
+      <GenUISurface surfaceManager={mockSurfaceManager} />,
+    );
+
+    expect(container.textContent).toContain("No A2UI surface yet");
+    expect(container.textContent).toContain("createSurface");
   });
 
   it("applies dark theme when surface theme mode is dark", () => {
