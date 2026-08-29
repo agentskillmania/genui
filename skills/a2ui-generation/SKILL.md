@@ -150,10 +150,26 @@ In inline mode, re-emit the complete payload after each change round (hosts pars
 
 The payload you generate is consumed by the GenUI engine (`@agentskillmania/genui`). The engine never fails silently — anything unrenderable surfaces as a visible error card — but you must honor these invariants for real content to appear:
 
-1. **`createSurface` comes first.** The host creates the surface (`{ "createSurface": { "surfaceId": ... } }`) before any `updateComponents` / `updateDataModel`; updates targeting an unknown `surfaceId` are dropped with a console error. Keep `surfaceId` identical across all messages.
+1. **`createSurface` comes first.** The host creates the surface before any `updateComponents` / `updateDataModel`; updates targeting an unknown `surfaceId` are dropped with a console error. Keep `surfaceId` identical across all messages.
 2. **The render entry is the literal `"root"`.** Each surface needs exactly one component whose `id` is `"root"`; the engine renders the tree from it. An entry id like `"card1"` renders a "No root component found" error card.
 3. **Component names must be registered** in [`reference/component-catalog.md`](reference/component-catalog.md). Unknown types render a visible "Unknown component type" error card.
 4. **Template bindings are expanded by the engine.** `{"children": {"path": "/data/items", "componentId": "item_tpl"}}` produces one instance per array item; relative `{"path": "field"}` bindings inside the template are resolved against each item. A missing/non-array path or unknown `componentId` renders an error card; an empty array renders an empty list.
+
+### Delivery dialects (host-specific)
+
+The same protocol reaches the renderer through two transports — use the one your host provides:
+
+**A. Tool-call hosts (wrangler backend: gmemo, …).** Deliver each message by calling the host tools, in this order:
+
+1. `a2ui_create_surface` — args `{ surfaceId, metadata: { title } }`
+2. `a2ui_update_components` — args `{ surfaceId, operations: [{ "op": "replace", "path": "/components", "value": [ <FULL component tree> ] }] }` — one operation carrying the whole tree from the catalog in genui shape (`{id, component, ...flat props}`); do not send per-component insert/update ops to build a tree
+3. `a2ui_update_data_model` — args `{ surfaceId, updates: [{ path: "/page", value: {…} }] }`
+
+Never paste the raw `{"updateComponents": …}` JSON into the reply text on these hosts — it renders as inert text, not a surface.
+
+**B. Raw-stream hosts (GenUISurface + SurfaceManager fed directly).** Emit the JSON envelopes from [`reference/component-catalog.md`](reference/component-catalog.md) — one message per line: `{"createSurface": …}`, `{"updateComponents": …}`, `{"updateDataModel": …}`.
+
+Both dialects obey the same invariants 1–4 above, including the literal `"root"` entry id.
 
 ## Non-Negotiables
 
