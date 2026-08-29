@@ -111,13 +111,14 @@ Do not read all sub-documents by default. Load only what the current task requir
 
 ## Output Persistence
 
-The A2UI payload itself is the deliverable. **Do not write to disk by default** — deliver `updateComponents` / `updateDataModel` inline in the response, since most hosts consume the payload from the conversation, not from files.
+The A2UI payload itself is the deliverable. **Do not write to disk by default** — deliver `updateComponents` / `updateDataModel` inline in the response in every environment, including coding agents (Claude Code, ZCode, Cursor, …). On-disk JSON copies have no lasting value and only accumulate clutter.
 
 Write artifacts to files only when one of these holds:
 
 1. The user explicitly asks for files, or specifies a directory / filename
 2. The user provides an existing artifact directory or existing output files to iterate on
-3. The session runs in a coding-agent environment with filesystem access (Claude Code, ZCode, Cursor, …) where on-disk artifacts enable preview tooling and diff-based iteration — in that environment, saving is the default
+
+If multi-round iteration on a large payload is expected, you may offer to move it into files for diff-based editing — but only write after the user agrees.
 
 When writing to disk:
 
