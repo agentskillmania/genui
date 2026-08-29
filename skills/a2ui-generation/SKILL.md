@@ -159,13 +159,13 @@ The payload you generate is consumed by the GenUI engine (`@agentskillmania/genu
 
 The same protocol reaches the renderer through two transports — use the one your host provides:
 
-**A. Tool-call hosts (wrangler backend: gmemo, …).** Deliver each message by calling the host tools, in this order:
+**A. Tool-call hosts (wrangler backend: gmemo, …).** Deliver each message by calling the host tools, in this order — and wait for each call's success ack before moving to the next:
 
 1. `a2ui_create_surface` — args `{ surfaceId, metadata: { title } }`
 2. `a2ui_update_components` — args `{ surfaceId, operations: [{ "op": "replace", "path": "/components", "value": [ <FULL component tree> ] }] }` — one operation carrying the whole tree from the catalog in genui shape (`{id, component, ...flat props}`); do not send per-component insert/update ops to build a tree
 3. `a2ui_update_data_model` — args `{ surfaceId, updates: [{ path: "/page", value: {…} }] }`
 
-Never paste the raw `{"updateComponents": …}` JSON into the reply text on these hosts — it renders as inert text, not a surface.
+Never paste the raw `{"updateComponents": …}` JSON into the reply text on these hosts — it renders as inert text, not a surface. If a tool call returns an error (e.g. parameter validation), fix the args and call again; the payload is NOT delivered until the ack succeeds.
 
 **B. Raw-stream hosts (GenUISurface + SurfaceManager fed directly).** Emit the JSON envelopes from [`reference/component-catalog.md`](reference/component-catalog.md) — one message per line: `{"createSurface": …}`, `{"updateComponents": …}`, `{"updateDataModel": …}`.
 
@@ -174,6 +174,7 @@ Both dialects obey the same invariants 1–4 above, including the literal `"root
 ## Non-Negotiables
 
 - **Always deliver A2UI output.** Once this skill is triggered, the task must end with a renderable payload — `updateComponents` + `updateDataModel` (plus the Python transformer in DTO mode), delivered inline by default, or written to disk when the Output Persistence conditions apply. A long explanation without A2UI artifacts is a failed invocation. If generation is genuinely not applicable, state that explicitly with the reason before doing anything else.
+- **Delivery counts only after the host acknowledges it.** A payload emitted in thinking is not delivered; a narrated "已发送/done" without the host's success result is a failed delivery. On tool-call hosts, each `a2ui_*` call must return its success ack before you claim that step complete — if a call errors, fix the args and re-send; never skip ahead or summarize an undelivered payload as done.
 - Non-DTO mode must produce UI layout (`updateComponents`) before data (`updateDataModel`)
 - Do not output fake buttons; clickable elements must use a real `Button + action`
 - Real buttons must have visible label text via the `text` property
